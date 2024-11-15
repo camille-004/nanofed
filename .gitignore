@@ -119,3 +119,7 @@ dmypy.json
 .ruff_cache/
 
 .DS_Store
+
+data/
+logs/
+models/

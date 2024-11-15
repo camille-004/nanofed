@@ -66,7 +66,7 @@ def test_encryption_provider():
     """Test encryption provider factory."""
     # Test getting default strategy
     default = EncryptionProvider.get_default()
-    assert isinstance(default, (BasicEncryption, DifferentialPrivacy))
+    assert isinstance(default, BasicEncryption)
 
     # Test strategy creation
     basic = EncryptionProvider.get_strategy(EncryptionMethod.BASIC)
