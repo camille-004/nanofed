@@ -1,0 +1,35 @@
+name: CI
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: '3.12'
+
+            - name: Install Poetry
+              run: curl -sSL https://install.python-poetry.org | python3 -
+
+            - name: Install dependencies
+              run: poetry install
+
+            - name: Run linters
+              run: make lint
+
+            - name: Type-check
+              run: make type-check
+
+            - name: Run tests
+              run: make test
