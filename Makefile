@@ -11,7 +11,6 @@ format:
 	poetry run ruff check --fix .
 
 type-check:
-	python3 -m pip install types-PyYAML
 	poetry run mypy .
 
 test:
