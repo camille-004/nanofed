@@ -11,6 +11,7 @@ format:
 	poetry run ruff check --fix .
 
 type-check:
+	poetry run mypy --install-types
 	poetry run mypy .
 
 test:
