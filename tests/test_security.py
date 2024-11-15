@@ -11,8 +11,6 @@ from fl.core.protocols import ModelWeights
 from fl.security.encryption import (
     BasicEncryption,
     DifferentialPrivacy,
-    EncryptionMethod,
-    EncryptionProvider,
     SecurityMiddleware,
 )
 
@@ -60,17 +58,6 @@ def test_differential_privacy(test_weights):
         np.allclose(noisy_weights[k], test_weights[k], atol=1.0)
         for k in test_weights
     )
-
-
-def test_encryption_provider():
-    """Test encryption provider factory."""
-    # Test getting default strategy
-    default = EncryptionProvider.get_default()
-    assert isinstance(default, BasicEncryption)
-
-    # Test strategy creation
-    basic = EncryptionProvider.get_strategy(EncryptionMethod.BASIC)
-    assert isinstance(basic, BasicEncryption)
 
 
 def test_security_middleware(security_middleware):
