@@ -14,17 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y curl python3-dev build-essential
+
       - name: Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          # Add poetry to PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Configure Poetry
         run: |
-          poetry config virtualenvs.create false
-          poetry config installer.max-workers 10
+          $HOME/.local/bin/poetry config virtualenvs.create false
+          $HOME/.local/bin/poetry config installer.max-workers 10
 
       - name: Install dependencies without PyTorch
         run: |
-          poetry install --no-interaction --without torch
+          $HOME/.local/bin/poetry install --no-interaction --without torch
 
       - name: Run linters
         run: make lint
@@ -47,7 +55,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: poetry install --no-interaction --without dev,torch
