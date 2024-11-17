@@ -38,10 +38,6 @@ trio = "^0.27.0"
 line-length = 79
 lint.select = ["E", "F", "I", "A", "C"]
 
-[tool.poetry.scripts]
-nanofed-server = "nanofed.cli.server:main"
-nanofed-client = "nanofed.cli.client:main"
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
