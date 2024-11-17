@@ -85,15 +85,20 @@ async def run_client(
                                 f"Loss={metrics.loss:.4f}, Accuracy={metrics.accuracy:.4f}"  # noqa
                             )
 
+                        if metrics is None:
+                            logger.error(
+                                "Metrics is None; skipping update submission"
+                            )
+                            return
+
                         # Submit final metrics for last epoch
+                        metrics_dict = {
+                            "loss": metrics.loss,
+                            "accuracy": metrics.accuracy,
+                            "samples_processed": metrics.samples_processed,
+                        }
                         success = await client.submit_update(
-                            model,
-                            {
-                                "loss": metrics.loss,
-                                "accuracy": metrics.accuracy,
-                                "client_id": client_id,
-                                "samples_processed": metrics.samples_processed,
-                            },
+                            model, metrics_dict
                         )
 
                         if success:

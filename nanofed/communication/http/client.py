@@ -6,8 +6,9 @@ import aiohttp
 import torch
 
 from nanofed.communication.http.types import (
+    ClientModelUpdateRequest,
     GlobalModelResponse,
-    ModelUpdateRequest,
+    ServerModelUpdateRequest,
 )
 from nanofed.core.exceptions import NanoFedError
 from nanofed.core.interfaces import ModelProtocol
@@ -81,13 +82,13 @@ class HTTPClient:
                 if data["status"] != "success":
                     raise NanoFedError(f"Error from server: {data['message']}")
 
-                model_params = {
+                model_state = {
                     key: torch.tensor(value)
-                    for key, value in data["model_params"].items()
+                    for key, value in data["model_state"].items()
                 }
 
                 self._current_round = data["round_number"]
-                return model_params, self._current_round
+                return model_state, self._current_round
 
             except aiohttp.ClientError as e:
                 raise NanoFedError(f"HTTP error: {str(e)}")
@@ -110,7 +111,7 @@ class HTTPClient:
                     for key, value in state_dict.items()
                 }
 
-                update: ModelUpdateRequest = {
+                update: ClientModelUpdateRequest = {
                     "client_id": self._client_id,
                     "round_number": self._current_round,
                     "model_state": model_state,
@@ -123,7 +124,7 @@ class HTTPClient:
                     if response.status != 200:
                         raise NanoFedError(f"Server error: {response.status}")
 
-                    data: ModelUpdateRequest = await response.json()
+                    data: ServerModelUpdateRequest = await response.json()
 
                     if data["status"] != "success":
                         raise NanoFedError(

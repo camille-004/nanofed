@@ -3,12 +3,13 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncGenerator, Callable
+from typing import AsyncGenerator, Callable, Sequence
 
 import torch
 
 from nanofed.communication.http.server import HTTPServer
 from nanofed.core.interfaces import ModelProtocol
+from nanofed.core.types import ModelUpdate
 from nanofed.orchestration.types import (
     ClientInfo,
     RoundMetrics,
@@ -137,8 +138,12 @@ class Coordinator:
 
             metrics_data = {
                 "round_id": metrics.round_id,
-                "start_time": metrics.start_time.isoformat(),
-                "end_time": metrics.end_time.isoformat(),
+                "start_time": metrics.start_time.isoformat()
+                if metrics.start_time
+                else None,
+                "end_time": metrics.end_time.isoformat()
+                if metrics.end_time
+                else None,
                 "num_clients": metrics.num_clients,
                 "agg_metrics": metrics.agg_metrics,
                 "status": metrics.status.name,
@@ -181,7 +186,21 @@ class Coordinator:
                         )
 
                     self._status = RoundStatus.AGGREGATING
-                    client_updates = list(self._server._updates.values())
+                    client_updates: Sequence[ModelUpdate] = [
+                        ModelUpdate(
+                            client_id=update["client_id"],
+                            round_number=update["round_number"],
+                            model_state={
+                                key: torch.tensor(value)
+                                for key, value in update["model_state"].items()
+                            },
+                            metrics=update["metrics"],
+                            timestamp=datetime.fromisoformat(
+                                update["timestamp"]
+                            ),
+                        )
+                        for update in self._server._updates.values()
+                    ]
 
                     client_metrics = [
                         {

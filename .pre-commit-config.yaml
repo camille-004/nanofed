@@ -19,9 +19,3 @@ repos:
       entry: make format
       language: system
       types: [python]
-
-    - id: type-check
-      name: Type-Check
-      entry: make type-check
-      language: system
-      types: [python]

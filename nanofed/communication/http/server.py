@@ -1,13 +1,14 @@
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from aiohttp import web
 
 from nanofed.communication.http.types import (
     GlobalModelResponse,
-    ModelUpdateRequest,
     ModelUpdateResponse,
+    ServerModelUpdateRequest,
 )
 from nanofed.server.model_manager.manager import ModelManager
 from nanofed.utils.logger import Logger
@@ -45,7 +46,7 @@ class HTTPServer:
 
         # State tracking
         self._current_round: int = 0
-        self._updates: dict[str, ModelUpdateRequest] = {}
+        self._updates: dict[str, ServerModelUpdateRequest] = {}
         self._lock = asyncio.Lock()
         self._is_training_done = False
 
@@ -61,7 +62,7 @@ class HTTPServer:
         )
         self._app.router.add_get("/test", self._handle_test)
 
-    async def _handle_test(request: web.Request) -> web.Response:
+    async def _handle_test(self, request: web.Request) -> web.Response:
         return web.Response(text="Server is running")
 
     async def _handle_get_model(self, request: web.Request) -> web.Response:
@@ -78,7 +79,7 @@ class HTTPServer:
 
                 # Convert model parameters to list for JSON serialization
                 state_dict = self._model_manager._model.state_dict()
-                model_params = {
+                model_state = {
                     key: value.cpu().numpy().tolist()
                     for key, value in state_dict.items()
                 }
@@ -87,7 +88,7 @@ class HTTPServer:
                     "status": "success",
                     "message": "Global model retrieved",
                     "timestamp": datetime.now().isoformat(),
-                    "model_params": model_params,
+                    "model_state": model_state,
                     "round_number": self._current_round,
                     "version_id": version.version_id,
                 }
@@ -110,8 +111,37 @@ class HTTPServer:
         """Handle model update submission from client."""
         with self._logger.context("server.http"):
             try:
-                data = await request.json()
-                update: ModelUpdateRequest = ModelUpdateRequest(**data)
+                data: dict[str, Any] = await request.json()
+
+                # Validate required fields
+                required_keys = {
+                    "client_id",
+                    "round_number",
+                    "model_state",
+                    "metrics",
+                    "timestamp",
+                }
+                if not required_keys.issubset(data.keys()):
+                    missing_keys = required_keys - data.keys()
+                    return web.json_response(
+                        {
+                            "status": "error",
+                            "message": f"Missing keys: {', '.join(missing_keys)}",  # noqa
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                        status=400,
+                    )
+
+                update: ServerModelUpdateRequest = {
+                    "client_id": data["client_id"],
+                    "round_number": data["round_number"],
+                    "model_state": data["model_state"],
+                    "metrics": data["metrics"],
+                    "timestamp": data["timestamp"],
+                    "status": data["status"],
+                    "message": data["message"],
+                    "accepted": data["accepted"],
+                }
 
                 async with self._lock:
                     if update["round_number"] != self._current_round:

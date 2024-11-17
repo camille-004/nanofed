@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Generic, Protocol, TypeVar
+from typing import Generic, Protocol, Sized, TypeVar, cast
 
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from nanofed.core.interfaces import ModelProtocol
@@ -72,13 +73,15 @@ class BaseTrainer(ABC, Generic[M]):
     @log_exec
     def train_epoch(
         self,
-        model: ModelProtocol,
+        model: M,
         dataloader: DataLoader,
         optimizer: torch.optim.Optimizer,
         epoch: int,
     ) -> TrainingMetrics:
         """Train for one epoch."""
-        model.train()
+        model_module = cast(nn.Module, model)
+        model_module.train()
+
         total_loss = 0.0
         total_accuracy = 0.0
         samples_processed = 0
@@ -97,7 +100,7 @@ class BaseTrainer(ABC, Generic[M]):
             optimizer.zero_grad()
 
             # Forward pass
-            output = model(data)
+            output = model_module(data)
             loss = self.compute_loss(output, target)
 
             # Backward pass
@@ -106,13 +109,13 @@ class BaseTrainer(ABC, Generic[M]):
 
             # Metrics
             accuracy = self.compute_accuracy(output, target)
-            total_loss += loss.item()
-            total_accuracy += accuracy
-            samples_processed += len(data)
+            total_loss += float(loss.item())
+            total_accuracy += float(accuracy)
+            samples_processed += int(len(data))
 
             metrics = TrainingMetrics(
-                loss=loss.item(),
-                accuracy=accuracy,
+                loss=float(loss.item()),
+                accuracy=float(accuracy),
                 epoch=epoch,
                 batch=batch_idx,
                 samples_processed=samples_processed,
@@ -122,18 +125,24 @@ class BaseTrainer(ABC, Generic[M]):
                 callback.on_batch_end(batch_idx, metrics)
 
             if batch_idx % self._config.log_interval == 0:
+                dataset = cast(Sized, dataloader.dataset)
+                total_samples = len(dataset)
+                progress = (
+                    100.0 * float(samples_processed) / float(total_samples)
+                )  # noqa
                 self._logger.info(
                     f"Train Epoch: {epoch} "
-                    f"[{samples_processed}/{len(dataloader.dataset)} "
-                    f"({100. * samples_processed / len(dataloader.dataset):.0f}%)] "  # noqa
+                    f"[{samples_processed}/{total_samples} "
+                    f"({progress:.0f}%)] "
                     f"Loss: {loss.item():.6f} "
                     f"Accuracy: {accuracy:.4f}"
                 )
 
-        avg_loss = total_loss / (batch_idx + 1)
-        avg_accuracy = total_accuracy / (batch_idx + 1)
+        batch_count = batch_idx + 1
+        avg_loss = total_loss / float(batch_count)
+        avg_accuracy = total_accuracy / float(batch_count)
 
-        metrics = TrainingMetrics(
+        final_metrics = TrainingMetrics(
             loss=avg_loss,
             accuracy=avg_accuracy,
             epoch=epoch,
@@ -142,6 +151,6 @@ class BaseTrainer(ABC, Generic[M]):
         )
 
         for callback in self._callbacks:
-            callback.on_epoch_end(epoch.metrics)
+            callback.on_epoch_end(epoch, final_metrics)
 
         return metrics

@@ -5,11 +5,11 @@ class BaseResponse(TypedDict):
     """Base response structure."""
 
     status: Literal["success", "error"]
-    mesage: str
+    message: str
     timestamp: str
 
 
-class ModelUpdateRequest(TypedDict):
+class ClientModelUpdateRequest(TypedDict):
     """Model update request structure."""
 
     client_id: str
@@ -17,6 +17,19 @@ class ModelUpdateRequest(TypedDict):
     model_state: dict[str, list[float] | list[list[float]]]
     metrics: dict[str, float]
     timestamp: str
+
+
+class ServerModelUpdateRequest(TypedDict):
+    """Model update request structure (processed by the server)."""
+
+    client_id: str
+    round_number: int
+    model_state: dict[str, list[float] | list[list[float]]]
+    metrics: dict[str, float]
+    timestamp: str
+    status: Literal["success", "error"]
+    message: str
+    accepted: bool
 
 
 class ModelUpdateResponse(BaseResponse):
