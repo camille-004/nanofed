@@ -63,7 +63,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: poetry install --no-interaction --without dev,torch
+        run: poetry install --no-interaction --without dev,ml
 
       - name: Build package
         run: poetry build
