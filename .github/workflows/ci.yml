@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies without PyTorch
         run: |
-          $HOME/.local/bin/poetry install --no-interaction --without torch
+          $HOME/.local/bin/poetry install --no-interaction --without ml
 
       - name: Run linters
         run: make lint
