@@ -32,7 +32,10 @@ jobs:
 
       - name: Install dependencies without PyTorch
         run: |
-          $HOME/.local/bin/poetry install --no-interaction --only-root
+          $HOME/.local/bin/poetry install --no-interaction --without ml --no-root
+
+      - name: Install package
+        run: $HOME/.local/bin/poetry install --no-interaction --only-root
 
       - name: Run linters
         run: make lint
