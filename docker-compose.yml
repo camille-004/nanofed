@@ -1,0 +1,16 @@
+version: '3.8'
+
+service:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+    command: poetry run pytest
+
+  example-mnist:
+    build:
+      context: .
+      dockerfile: examplers/mnist/Dockerfile
+    command: python run_experiment.py
