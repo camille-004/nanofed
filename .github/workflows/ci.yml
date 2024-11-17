@@ -17,8 +17,14 @@ jobs:
       - name: Install Poetry
         run: curl -sSL https://install.python-poetry.org | python3 -
 
-      - name: Install dependencies
-        run: poetry install
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.create false
+          poetry config installer.max-workers 10
+
+      - name: Install dependencies without PyTorch
+        run: |
+          poetry install --no-interaction --without torch
 
       - name: Run linters
         run: make lint
@@ -40,8 +46,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+
       - name: Install dependencies
-        run: pip install build twine
+        run: poetry install --no-interaction --without dev,torch
 
       - name: Build package
-        run: python -m build
+        run: poetry build
+
+      - name: Check distribution
+        run: |
+          poetry run pip install twine
+          poetry run twine check dist/*
