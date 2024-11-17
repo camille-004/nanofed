@@ -72,23 +72,30 @@ class HTTPClient:
             try:
                 url = self._get_url(self._endpoints.get_model)
                 async with self._session.get(url) as response:
+                    if response.status != 200:
+                        raise NanoFedError(
+                            f"Server error while fetching model: {response.status}"  # noqa
+                        )
+
                     data: GlobalModelResponse = await response.json()
 
-                    if response.status == 404:
-                        raise NanoFedError("No model available on serevr")
-                    elif response.status != 200:
-                        raise NanoFedError(f"Server error: {response.status}")
+                    if "status" not in data or data["status"] != "success":
+                        raise NanoFedError(
+                            f"Error from server: {data.get('message', 'Unknown error')}"  # noqa
+                        )
 
-                if data["status"] != "success":
-                    raise NanoFedError(f"Error from server: {data['message']}")
+                    if "model_state" not in data or "round_number" not in data:
+                        raise NanoFedError(
+                            "Invalid server response: missing required fields"
+                        )
 
-                model_state = {
-                    key: torch.tensor(value)
-                    for key, value in data["model_state"].items()
-                }
+                    model_state = {
+                        key: torch.tensor(value)
+                        for key, value in data["model_state"].items()
+                    }
 
-                self._current_round = data["round_number"]
-                return model_state, self._current_round
+                    self._current_round = data["round_number"]
+                    return model_state, self._current_round
 
             except aiohttp.ClientError as e:
                 raise NanoFedError(f"HTTP error: {str(e)}")

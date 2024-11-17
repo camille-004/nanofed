@@ -121,3 +121,5 @@ dmypy.json
 .DS_Store
 
 logs/
+
+runs/

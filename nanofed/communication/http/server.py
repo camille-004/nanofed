@@ -113,7 +113,6 @@ class HTTPServer:
             try:
                 data: dict[str, Any] = await request.json()
 
-                # Validate required fields
                 required_keys = {
                     "client_id",
                     "round_number",
@@ -138,9 +137,9 @@ class HTTPServer:
                     "model_state": data["model_state"],
                     "metrics": data["metrics"],
                     "timestamp": data["timestamp"],
-                    "status": data["status"],
-                    "message": data["message"],
-                    "accepted": data["accepted"],
+                    "status": data.get("status", "success"),
+                    "message": data.get("mesage", ""),
+                    "accepted": data.get("accepted", True),
                 }
 
                 async with self._lock:

@@ -19,7 +19,7 @@ class ClientModelUpdateRequest(TypedDict):
     timestamp: str
 
 
-class ServerModelUpdateRequest(TypedDict):
+class ServerModelUpdateRequest(TypedDict, total=False):
     """Model update request structure (processed by the server)."""
 
     client_id: str

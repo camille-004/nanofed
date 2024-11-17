@@ -11,7 +11,6 @@ DATA_PATH = BASE_DIR / "runs/mnist"
 
 
 def stream_output(process: subprocess.Popen, process_name: str) -> None:
-    """Stream the output of a subprocess, ensuring no empty lines."""
     with process.stdout as stdout, process.stderr as stderr:
         for line in iter(stdout.readline, ""):
             line = line.strip()
@@ -24,7 +23,6 @@ def stream_output(process: subprocess.Popen, process_name: str) -> None:
 
 
 def run_server() -> subprocess.Popen:
-    """Run the federated learning server."""
     server_cmd = ["python", "-m", "nanofed.cli.server", str(SERVER_CONFIG)]
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
@@ -39,7 +37,6 @@ def run_server() -> subprocess.Popen:
 
 
 def run_client(client_id: str) -> subprocess.Popen:
-    """Run a federated learning client."""
     client_cmd = [
         "python",
         "-m",
@@ -64,7 +61,6 @@ def run_client(client_id: str) -> subprocess.Popen:
 
 
 def main():
-    # Start the server
     print(
         f"Starting server with command: python -m nanofed.cli.server {SERVER_CONFIG}"  # noqa
     )
@@ -75,7 +71,6 @@ def main():
     )
     server_thread.start()
 
-    # Start the clients
     client_processes = []
     client_threads = []
     for client_id in ["client1", "client2", "client3"]:
@@ -104,7 +99,6 @@ def main():
             process.terminate()
         server_process.terminate()
 
-    # Ensure all threads are cleaned up
     for thread in client_threads:
         thread.join()
     server_thread.join()
