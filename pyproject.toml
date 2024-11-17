@@ -1,39 +1,46 @@
 [tool.poetry]
-name = "fl"
+name = "nanofed"
 version = "0.1.0"
-description = ""
+description = "A lightweight federated learning library"
 authors = ["camille-004 <dunningcamille@gmail.com>"]
 readme = "README.md"
-packages = [{include = "fl"}]
+homepage = "https://github.com/camille-004/nanofed"
+repository = "https://github.com/camille-004/nanofed"
+keywords = ["federated-learning", "deep-learning", "pytorch"]
+packages = [{include = "nanofed"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-pytest = "^8.2.2"
-pytest-mock = "^3.14.0"
 numpy = "^2.1.2"
 pydantic = "^2.9.2"
-pydantic-settings = "^2.6.1"
-tenseal = "^0.3.15"
-diffprivlib = "^0.6.5"
-cryptography = "^43.0.3"
 aiohttp = "^3.10.10"
-aiofiles = "^24.1.0"
-fastapi = "^0.115.4"
-websockets = "^13.1"
-uvicorn = "^0.32.0"
-httpx = "^0.27.2"
-pytest-asyncio = "^0.24.0"
-trio = "^0.27.0"
-starlette = "^0.41.2"
+torch = { url = "https://download.pytorch.org/whl/cpu/torch-2.5.1-cp312-none-macosx_11_0_arm64.whl" }
+torchvision = { url = "https://download.pytorch.org/whl/cpu/torchvision-0.20.1-cp312-cp312-macosx_11_0_arm64.whl" }
+click = "^8.1.7"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.8"
 mypy = "^1.10.0"
 pre-commit = "^3.7.1"
+pytest = "^8.2.2"
+pytest-mock = "^3.14.0"
+pytest-asyncio = "^0.24.0"
+trio = "^0.27.0"
 
 [tool.ruff]
 line-length = 79
 lint.select = ["E", "F", "I", "A", "C"]
+
+[tool.poetry.scripts]
+nanofed-server = "nanofed.cli.server:main"
+nanofed-client = "nanofed.cli.client:main"
 
 [build-system]
 requires = ["poetry-core"]

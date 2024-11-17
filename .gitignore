@@ -120,6 +120,4 @@ dmypy.json
 
 .DS_Store
 
-data/
 logs/
-models/

@@ -1,0 +1,17 @@
+server:
+  url: "http://localhost:8080"
+
+client:
+  timeout: 300
+
+training:
+  local_epochs: 2
+  batch_size: 512
+  learning_rate: 0.2
+  device: "cpu"
+  log_interval: 10
+
+logging:
+  level: "INFO"
+  color: true
+  output: "console"
