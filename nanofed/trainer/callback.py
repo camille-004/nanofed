@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from nanofed.trainer.base import TrainingCallback, TrainingMetrics
+from nanofed.trainer.base import Callback, TrainingMetrics
 
 
 @dataclass(slots=True)
-class MetricsLogger(TrainingCallback):
+class MetricsLogger(Callback):
     """Callback for logging metrics to a file."""
 
     log_dir: Path

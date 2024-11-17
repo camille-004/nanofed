@@ -35,7 +35,7 @@ class TrainingMetrics:
     samples_processed: int
 
 
-class TrainingCallback(Protocol):
+class Callback(Protocol):
     """Protocol for training callbacks."""
 
     def on_eopch_start(self, epoch: int) -> None: ...
@@ -49,7 +49,7 @@ class BaseTrainer(ABC, Generic[M]):
     def __init__(
         self,
         config: TrainingConfig,
-        callbacks: list[TrainingCallback] | None = None,
+        callbacks: list[Callback] | None = None,
     ) -> None:
         self._config = config
         self._callbacks = callbacks or []
