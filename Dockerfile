@@ -10,11 +10,13 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
+RUN poetry config virtualenvs.create false && \
+    poetry config installer.max-workers 10
+
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.create false \
-    && poetry install --with dev
+RUN poetry install --no-interaction
 
 COPY . .
 
-CMD ["poetry", "run", "pytest"]
+CMD ["/bin/bash"]

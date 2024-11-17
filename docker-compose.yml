@@ -1,16 +1,18 @@
 version: '3.8'
 
-service:
+services:
   dev:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     volumes:
       - .:/app
-    command: poetry run pytest
-
-  example-mnist:
-    build:
-      context: .
-      dockerfile: examplers/mnist/Dockerfile
-    command: python run_experiment.py
+      - ./examples/mnist/runs:/app/examples/mnist/runs
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+    stdin_open: true
+    tty: true
+    command: /bin/bash
