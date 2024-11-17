@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from nanofed.trainer.base import Callback, TrainingMetrics
+from nanofed.trainer import Callback, TrainingMetrics
 
 
 @dataclass(slots=True)

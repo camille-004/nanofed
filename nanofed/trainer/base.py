@@ -6,8 +6,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from nanofed.core.interfaces import ModelProtocol
-from nanofed.utils.logger import Logger, log_exec
+from nanofed.core import ModelProtocol
+from nanofed.utils import Logger, log_exec
 
 M = TypeVar("M", bound=ModelProtocol)
 

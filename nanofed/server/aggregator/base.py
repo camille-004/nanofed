@@ -4,10 +4,8 @@ from datetime import datetime
 from functools import lru_cache
 from typing import Generic, Sequence, TypeVar
 
-from nanofed.core.exceptions import AggregationError
-from nanofed.core.interfaces import ModelProtocol
-from nanofed.core.types import ModelUpdate
-from nanofed.utils.logger import Logger
+from nanofed.core import AggregationError, ModelProtocol, ModelUpdate
+from nanofed.utils import Logger
 
 T = TypeVar("T", bound=ModelProtocol)
 

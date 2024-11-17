@@ -10,9 +10,8 @@ from nanofed.communication.http.types import (
     GlobalModelResponse,
     ServerModelUpdateRequest,
 )
-from nanofed.core.exceptions import NanoFedError
-from nanofed.core.interfaces import ModelProtocol
-from nanofed.utils.logger import Logger, log_exec
+from nanofed.core import ModelProtocol, NanoFedError
+from nanofed.utils import Logger, log_exec
 
 
 @dataclass(slots=True, frozen=True)

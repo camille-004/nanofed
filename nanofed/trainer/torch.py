@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from nanofed.trainer.base import BaseTrainer
+from nanofed.trainer import BaseTrainer
 
 
 class TorchTrainer(BaseTrainer):

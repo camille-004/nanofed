@@ -7,17 +7,16 @@ from typing import AsyncGenerator, Callable, Sequence
 
 import torch
 
-from nanofed.communication.http.server import HTTPServer
-from nanofed.core.interfaces import ModelProtocol
-from nanofed.core.types import ModelUpdate
+from nanofed.communication import HTTPServer
+from nanofed.core import ModelProtocol, ModelUpdate
 from nanofed.orchestration.types import (
     ClientInfo,
     RoundMetrics,
     RoundStatus,
-    TrainingProgess,
+    TrainingProgress,
 )
-from nanofed.server.aggregator.base import BaseAggregator
-from nanofed.utils.logger import Logger, log_exec
+from nanofed.server import BaseAggregator
+from nanofed.utils import Logger, log_exec
 
 
 @dataclass(slots=True, frozen=True)
@@ -60,7 +59,7 @@ class Coordinator:
         self._config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
     @property
-    def training_progress(self) -> TrainingProgess:
+    def training_progress(self) -> TrainingProgress:
         """Get current training progress."""
         return {
             "current_round": self._current_round,
@@ -260,7 +259,7 @@ class Coordinator:
 
     async def start_training(
         self,
-        progress_callback: Callable[[TrainingProgess], None] | None = None,
+        progress_callback: Callable[[TrainingProgress], None] | None = None,
     ) -> AsyncGenerator[RoundMetrics, None]:
         with self._logger.context("coordinator"):
             try:

@@ -36,7 +36,7 @@ class RoundMetrics:
     status: RoundStatus
 
 
-class TrainingProgess(TypedDict):
+class TrainingProgress(TypedDict):
     """Training progress information."""
 
     current_round: int

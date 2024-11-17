@@ -7,12 +7,11 @@ import click
 import torch
 import yaml
 
-from nanofed.communication.http.client import HTTPClient
-from nanofed.data.mnist import load_mnist_data
-from nanofed.models.mnist import MNISTModel
-from nanofed.trainer.base import TrainingConfig
-from nanofed.trainer.torch import TorchTrainer
-from nanofed.utils.logger import Logger
+from nanofed.communication import HTTPClient
+from nanofed.data import load_mnist_data
+from nanofed.models import MNISTModel
+from nanofed.trainer import TorchTrainer, TrainingConfig
+from nanofed.utils import Logger
 
 
 async def run_client(

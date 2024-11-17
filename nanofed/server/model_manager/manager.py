@@ -5,10 +5,8 @@ from pathlib import Path
 
 import torch
 
-from nanofed.core.exceptions import ModelManagerError
-from nanofed.core.interfaces import ModelProtocol
-from nanofed.core.types import ModelConfig
-from nanofed.utils.logger import Logger, log_exec
+from nanofed.core import ModelConfig, ModelManagerError, ModelProtocol
+from nanofed.utils import Logger, log_exec
 
 
 @dataclass(slots=True, frozen=True)

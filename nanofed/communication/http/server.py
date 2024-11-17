@@ -10,8 +10,8 @@ from nanofed.communication.http.types import (
     ModelUpdateResponse,
     ServerModelUpdateRequest,
 )
-from nanofed.server.model_manager.manager import ModelManager
-from nanofed.utils.logger import Logger
+from nanofed.server import ModelManager
+from nanofed.utils import Logger
 
 
 @dataclass(slots=True, frozen=True)

@@ -6,16 +6,12 @@ from typing import Any
 import click
 import yaml
 
-from nanofed.communication.http.server import HTTPServer
-from nanofed.core.types import ModelConfig
-from nanofed.models.mnist import MNISTModel
-from nanofed.orchestration.coordinator import (
-    Coordinator,
-    CoordinatorConfig,
-)
-from nanofed.server.aggregator.fedavg import FedAvgAggregator
-from nanofed.server.model_manager.manager import ModelManager
-from nanofed.utils.logger import Logger
+from nanofed.communication import HTTPServer
+from nanofed.core import ModelConfig
+from nanofed.models import MNISTModel
+from nanofed.orchestration import Coordinator, CoordinatorConfig
+from nanofed.server import FedAvgAggregator, ModelManager
+from nanofed.utils import Logger
 
 
 async def run_server(config_path: Path) -> None:

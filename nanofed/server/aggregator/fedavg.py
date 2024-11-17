@@ -3,10 +3,9 @@ from typing import Sequence
 
 import torch
 
-from nanofed.core.interfaces import ModelProtocol
-from nanofed.core.types import ModelUpdate
-from nanofed.server.aggregator.base import AggregationResult, BaseAggregator
-from nanofed.utils.logger import log_exec
+from nanofed.core import ModelProtocol, ModelUpdate
+from nanofed.server.aggregator import AggregationResult, BaseAggregator
+from nanofed.utils import log_exec
 
 
 class FedAvgAggregator(BaseAggregator[ModelProtocol]):
