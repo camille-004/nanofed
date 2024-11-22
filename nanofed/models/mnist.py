@@ -4,8 +4,6 @@ import torch.nn.functional as F
 
 
 class MNISTModel(nn.Module):
-    """Simple CNN for MNIST classification."""
-
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 32, 3, 1)

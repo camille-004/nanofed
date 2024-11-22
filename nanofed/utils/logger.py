@@ -3,7 +3,6 @@ import logging
 import sys
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum, auto
 from functools import wraps
 from pathlib import Path
@@ -16,6 +15,8 @@ from typing import (
     ParamSpec,
     TypeVar,
 )
+
+from nanofed.utils.dates import get_current_time
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -51,8 +52,6 @@ class LogContext:
 
 
 class Logger:
-    """Singleton logger with color support and file output."""
-
     _instance: ClassVar["Logger | None"] = None
     _initialized: bool = False
     current_context: LogContext | None
@@ -107,7 +106,8 @@ class Logger:
 
         if config.output in ("file", "both") and config.log_dir:
             log_file = (
-                config.log_dir / f"nanofed_{datetime.now():%Y%m%d_%H%M%S}.log"
+                config.log_dir
+                / f"nanofed_{get_current_time():%Y%m%d_%H%M%S}.log"
             )
             log_file.parent.mkdir(parents=True, exist_ok=True)
             file_handler = logging.FileHandler(log_file)
@@ -192,13 +192,13 @@ def log_exec(func: Callable[P, R]) -> Callable[P, R]:
     @wraps(func)
     def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         logger = Logger()
-        start_time = datetime.now()
+        start_time = get_current_time()
         logger.debug(f"Starting {func.__name__}")
         try:
             result = func(*args, **kwargs)
             logger.debug(
                 f"Completed {func.__name__} in "
-                f"{(datetime.now() - start_time).total_seconds():.2f}s"
+                f"{(get_current_time() - start_time).total_seconds():.2f}s"
             )
             return result
         except Exception as e:
@@ -208,13 +208,13 @@ def log_exec(func: Callable[P, R]) -> Callable[P, R]:
     @wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         logger = Logger()
-        start_time = datetime.now()
+        start_time = get_current_time()
         logger.debug(f"Starting {func.__name__}")
         try:
-            result = await func(*args, **kwargs)  # type: ignore[misc]
+            result: R = await func(*args, **kwargs)  # type: ignore[misc]
             logger.debug(
                 f"Completed {func.__name__} in "
-                f"{(datetime.now() - start_time).total_seconds():.2f}s"
+                f"{(get_current_time() - start_time).total_seconds():.2f}s"
             )
             return result
         except Exception as e:

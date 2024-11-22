@@ -1,8 +1,9 @@
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
+from typing import Any, TypeAlias, cast
 
+import numpy as np
+import torch
 from aiohttp import web
 
 from nanofed.communication.http.types import (
@@ -11,7 +12,12 @@ from nanofed.communication.http.types import (
     ServerModelUpdateRequest,
 )
 from nanofed.server import ModelManager
-from nanofed.utils import Logger
+from nanofed.utils import Logger, get_current_time
+
+TensorLike: TypeAlias = (
+    torch.Tensor | list[float] | list[list[float]] | float | int
+)
+ModelState: TypeAlias = dict[str, list[float] | list[list[float]]]
 
 
 @dataclass(slots=True, frozen=True)
@@ -24,7 +30,33 @@ class ServerEndpoints:
 
 
 class HTTPServer:
-    """HTTP server for communication."""
+    """HTTP server for FL coordination.
+
+    Manages client connections, model distribution, and update collection using
+    HTTP protocol.
+
+    Parameters
+    ----------
+    host : str
+        Server host address.
+    port : int
+        Server port number.
+    model_manager : ModelManager
+        Manager for global model versions.
+    endpoints : ServerEndpoints, optional
+        Custom endpoint configuration.
+    max_request_size : int, default=104857600
+        Maximum allowed request size in bytes (default: 100MB).
+
+    Attributes
+    ----------
+    _current_round : int
+        Current training round number.
+    _updates : dict
+        Dictionary of received client updates.
+    _is_training_done : bool
+        Flag indicating training completion.
+    """
 
     def __init__(
         self,
@@ -62,6 +94,18 @@ class HTTPServer:
         )
         self._app.router.add_get("/test", self._handle_test)
 
+    def _convert_tensor(
+        self, value: TensorLike
+    ) -> list[float] | list[list[float]]:
+        if isinstance(value, torch.Tensor):
+            arr = value.cpu().detach().numpy()
+            return cast(list[float] | list[list[float]], arr.tolist())
+        elif isinstance(value, (list, np.ndarray)):
+            return value
+        elif isinstance(value, (int, float)):
+            return [float(value)]
+        raise ValueError(f"Unsupported type for conversion: {type(value)}")
+
     async def _handle_test(self, request: web.Request) -> web.Response:
         return web.Response(text="Server is running")
 
@@ -80,14 +124,14 @@ class HTTPServer:
                 # Convert model parameters to list for JSON serialization
                 state_dict = self._model_manager._model.state_dict()
                 model_state = {
-                    key: value.cpu().numpy().tolist()
+                    key: self._convert_tensor(value)
                     for key, value in state_dict.items()
                 }
 
                 response: GlobalModelResponse = {
                     "status": "success",
                     "message": "Global model retrieved",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_current_time().isoformat(),
                     "model_state": model_state,
                     "round_number": self._current_round,
                     "version_id": version.version_id,
@@ -100,7 +144,7 @@ class HTTPServer:
                     {
                         "status": "error",
                         "message": str(e),
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": get_current_time().isoformat(),
                     },
                     status=500,
                 )
@@ -126,7 +170,7 @@ class HTTPServer:
                         {
                             "status": "error",
                             "message": f"Missing keys: {', '.join(missing_keys)}",  # noqa
-                            "timestamp": datetime.now().isoformat(),
+                            "timestamp": get_current_time().isoformat(),
                         },
                         status=400,
                     )
@@ -148,7 +192,7 @@ class HTTPServer:
                             {
                                 "status": "error",
                                 "message": "Invalid round number",
-                                "timestamp": datetime.now().isoformat(),
+                                "timestamp": get_current_time().isoformat(),
                             },
                             status=400,
                         )
@@ -159,7 +203,7 @@ class HTTPServer:
                     response: ModelUpdateResponse = {
                         "status": "success",
                         "message": "Updated accepted",
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": get_current_time().isoformat(),
                         "update_id": f"update_{client_id}_{self._current_round}",  # noqa
                         "accepted": True,
                     }
@@ -171,7 +215,7 @@ class HTTPServer:
                     {
                         "status": "error",
                         "message": str(e),
-                        "timestamp": datetime.now().isoformat(),
+                        "timestamp": get_current_time().isoformat(),
                     },
                     status=500,
                 )
@@ -181,7 +225,7 @@ class HTTPServer:
             {
                 "status": "success",
                 "message": "Server is running",
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_current_time().isoformat(),
                 "current_round": self._current_round,
                 "num_updates": len(self._updates),
                 "is_training_done": self._is_training_done,

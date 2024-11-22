@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms  # type: ignore[import]
+from torchvision import datasets, transforms
 
 
 def load_mnist_data(

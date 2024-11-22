@@ -1,3 +1,5 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from nanofed.cli import client_main, server_main
 from nanofed.communication import HTTPClient, HTTPServer
 from nanofed.orchestration import Coordinator, CoordinatorConfig
@@ -15,3 +17,9 @@ __all__ = [
     "FedAvgAggregator",
     "ModelManager",
 ]
+
+
+try:
+    __version__ = version("nanofed")
+except PackageNotFoundError:
+    __version__ = "unknown"

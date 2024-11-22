@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from functools import lru_cache
 from typing import Generic, Sequence, TypeVar
 
 from nanofed.core import AggregationError, ModelProtocol, ModelUpdate
@@ -27,15 +26,19 @@ class BaseAggregator(ABC, Generic[T]):
     def __init__(self) -> None:
         self._logger = Logger()
         self._current_round: int = 0
+        self._weights_cache: dict[int, list[float]] = {}
 
     @property
     def current_round(self) -> int:
         return self._current_round
 
-    @lru_cache(maxsize=128)
     def _compute_weights(self, num_clients: int) -> list[float]:
         """Compute aggregation weights for clients."""
-        return [1.0 / num_clients] * num_clients
+        if num_clients not in self._weights_cache:
+            self._weights_cache[num_clients] = [
+                1.0 / num_clients
+            ] * num_clients
+        return self._weights_cache[num_clients]
 
     def _validate_updates(self, updates: Sequence[ModelUpdate]) -> None:
         """Validate model updates before aggregation."""

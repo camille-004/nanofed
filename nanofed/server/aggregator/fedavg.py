@@ -1,15 +1,40 @@
-from datetime import datetime
 from typing import Sequence
 
 import torch
 
 from nanofed.core import ModelProtocol, ModelUpdate
 from nanofed.server.aggregator import AggregationResult, BaseAggregator
-from nanofed.utils import log_exec
+from nanofed.utils import get_current_time, log_exec
 
 
 class FedAvgAggregator(BaseAggregator[ModelProtocol]):
-    """Federate Averaging aggregation strategy."""
+    """Federate Averaging (FedAvg) aggregation strategy.
+
+    Implements the FedAvg algorithm for aggregating client model updates into
+    a global model. Supports weighted averaging based on client data sizes.
+
+    Methods
+    -------
+    aggregate(model, updates)
+        Aggregate client updates into global model.
+    _compute_weights(num_clients)
+        Compute aggregation weights for clients.
+    _aggregate_metrics(updates)
+        Aggregate training metrics from clients.
+
+    Notes
+    -----
+    The aggregation process:
+    1. Validates all client updates
+    2. Computes weighted average of model parameters
+    3. Updates global model with aggregated parameters
+    4. Aggregates client metrics
+
+    Examples
+    --------
+    >>> aggregator = FedAvgAggregator()
+    >>> result = aggregator.aggregate(global_model, client_updates)
+    """
 
     def _to_tensor(
         self, data: list[float] | list[list[float]] | torch.Tensor
@@ -48,7 +73,7 @@ class FedAvgAggregator(BaseAggregator[ModelProtocol]):
             model=model,
             round_number=self._current_round,
             num_clients=len(updates),
-            timestamp=datetime.now(),
+            timestamp=get_current_time(),
             metrics=avg_metrics,
         )
 
@@ -62,8 +87,6 @@ class FedAvgAggregator(BaseAggregator[ModelProtocol]):
             for key, value in update["metrics"].items():
                 if isinstance(value, (int, float)):
                     all_metrics.setdefault(key, []).append(value)
-                else:
-                    continue
 
         return {
             key: sum(values) / len(values)

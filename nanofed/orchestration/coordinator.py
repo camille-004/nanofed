@@ -16,7 +16,7 @@ from nanofed.orchestration.types import (
     TrainingProgress,
 )
 from nanofed.server import BaseAggregator
-from nanofed.utils import Logger, log_exec
+from nanofed.utils import Logger, get_current_time, log_exec
 
 
 @dataclass(slots=True, frozen=True)
@@ -32,7 +32,44 @@ class CoordinatorConfig:
 
 
 class Coordinator:
-    """Coordinated federated learning training."""
+    """Coordinated federated training across clients.
+
+    Manages training rounds, client synchronization, model aggregation,
+    and training progress tracking.
+
+    Parameters
+    ----------
+    model : ModelProtocol
+        Global model instance.
+    aggregator : BaseAggregator
+        Strategy for aggregating client updates.
+    server : HTTPServer
+        Server instance for client communication.
+    config : CoordinatorConfig
+        Coordinator configuration.
+
+    Attributes
+    ----------
+    training_progress : TrainingProgress
+        Current training progress information.
+    _current_round : int
+        Current training round number.
+    _status : RoundStatus
+        Current training status.
+
+    Methods
+    -------
+    start_training(progress_callback=None)
+        Start federated training process.
+    train_round()
+        Execute one training round.
+
+    Examples
+    --------
+    >>> coordinator = Coordinator(model, aggregator, server, config)
+    >>> async for metrics in coordinator.start_training():
+    ...     print(f"Round {metrics.round_id} completed")
+    """
 
     def __init__(
         self,
@@ -87,7 +124,7 @@ class Coordinator:
         with self._logger.context(
             "coordinator", f"round_{self._current_round}"
         ):
-            start_time = datetime.now()
+            start_time = get_current_time()
             required_clients = int(
                 self._config.min_clients * self._config.min_completion_rate
             )
@@ -95,9 +132,11 @@ class Coordinator:
             last_logged_client_count = -1
             log_interval = 10
 
-            while (datetime.now() - start_time).total_seconds() < timeout:
+            while (get_current_time() - start_time).total_seconds() < timeout:
                 completed_clients = len(self._server._updates)
-                elapsed_time = (datetime.now() - start_time).total_seconds()
+                elapsed_time = (
+                    get_current_time() - start_time
+                ).total_seconds()
 
                 if (
                     completed_clients != last_logged_client_count
@@ -169,7 +208,7 @@ class Coordinator:
             async with self._round_lock:
                 try:
                     self._status = RoundStatus.IN_PROGRESS
-                    start_time = datetime.now()
+                    start_time = get_current_time()
 
                     self._server._updates.clear()
 
@@ -238,7 +277,7 @@ class Coordinator:
                     metrics = RoundMetrics(
                         round_id=self._current_round - 1,
                         start_time=start_time,
-                        end_time=datetime.now(),
+                        end_time=get_current_time(),
                         num_clients=len(client_updates),
                         agg_metrics=aggregation_result.metrics,
                         status=self._status,

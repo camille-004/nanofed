@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -7,6 +6,7 @@ import torch
 
 from nanofed.core.interfaces import ModelProtocol
 from nanofed.server.model_manager.manager import ModelManager, ModelVersion
+from nanofed.utils.dates import get_current_time
 
 
 class DummyModel(torch.nn.Module, ModelProtocol):
@@ -57,7 +57,7 @@ def test_load_latest_model():
             read_data=json.dumps(
                 {
                     "version_id": "model_v_test_001",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_current_time().isoformat(),
                     "config": {"learning_rate": 0.01},
                     "metrics": {"loss": 0.1},
                 }

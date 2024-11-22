@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 
 from nanofed.core import ModelConfig, ModelManagerError, ModelProtocol
-from nanofed.utils import Logger, log_exec
+from nanofed.utils import Logger, get_current_time, log_exec
 
 
 @dataclass(slots=True, frozen=True)
@@ -20,7 +20,40 @@ class ModelVersion:
 
 
 class ModelManager:
-    """Manages model versioning and storage."""
+    """Manages versioning and storage of FL models.
+
+    Handles model versioning, persistence, and loading of model checkpoints
+    with associated metadata.
+
+    Parameters
+    ----------
+    base_dir : Path
+        Base directory for model storage.
+    model : ModelProtocol
+        Initial model instance.
+
+    Attributes
+    ----------
+    current_version : ModelVersion or None
+        Current active model version.
+    _version_counter : int
+        Counter for generating version IDs.
+
+    Methods
+    -------
+    save_model(config, metrics=None)
+        Save current model state with configuration.
+    load_model(version_id=None)
+        Load a specific model version or latest.
+    list_versions()
+        List all avaialble model versions.
+
+    Examples
+    --------
+    >>> manager = ModelManager(Path("./models"), model)
+    >>> version = manager.save_model(config)
+    >>> manager.load_model(version.version_id)
+    """
 
     def __init__(self, base_dir: Path, model: ModelProtocol) -> None:
         self._base_dir = base_dir
@@ -41,7 +74,7 @@ class ModelManager:
 
     def _generate_version_id(self) -> str:
         """Generate a unique version ID."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = get_current_time().strftime("%Y%m%d_%H%M%S")
         self._version_counter += 1
         return f"model_v_{timestamp}_{self._version_counter:03d}"
 
@@ -58,7 +91,7 @@ class ModelManager:
 
             config_data = {
                 "version_id": version_id,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_current_time().isoformat(),
                 "config": config,
                 "metrics": metrics or {},
             }
@@ -69,7 +102,7 @@ class ModelManager:
 
             version = ModelVersion(
                 version_id=version_id,
-                timestamp=datetime.now(),
+                timestamp=get_current_time(),
                 config=config,
                 path=model_path,
             )
@@ -106,7 +139,7 @@ class ModelManager:
                 state_dict = torch.load(model_path, weights_only=True)
                 self._model.load_state_dict(state_dict)
             except Exception as e:
-                raise ModelManagerError(f"Failde to load model: {e}")
+                raise ModelManagerError(f"Failde to load model: {e}") from e
 
             version = ModelVersion(
                 version_id=config_data["version_id"],

@@ -1,9 +1,9 @@
 import json
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 from nanofed.trainer import Callback, TrainingMetrics
+from nanofed.utils import get_current_time
 
 
 @dataclass(slots=True)
@@ -17,7 +17,7 @@ class MetricsLogger(Callback):
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self._log_file = (
             self.log_dir
-            / f"{self.experiment_name}_{datetime.now():%Y%m%d_%H%M%S}.json"
+            / f"{self.experiment_name}_{get_current_time():%Y%m%d_%H%M%S}.json"
         )
         self._metrics: list[dict] = []
 
@@ -32,7 +32,7 @@ class MetricsLogger(Callback):
             "loss": metrics.loss,
             "accuracy": metrics.accuracy,
             "samples_processed": metrics.samples_processed,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": get_current_time().isoformat(),
         }
         self._metrics.append(metrics_dict)
 
@@ -48,6 +48,6 @@ class MetricsLogger(Callback):
             "loss": metrics.loss,
             "accuracy": metrics.accuracy,
             "samples_processed": metrics.samples_processed,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": get_current_time().isoformat(),
         }
         self._metrics.append(metrics_dict)

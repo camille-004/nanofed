@@ -44,7 +44,41 @@ class Callback(Protocol):
 
 
 class BaseTrainer(ABC, Generic[M]):
-    """Base trainer class."""
+    """Base class for model training implementations.
+
+    Provides abstract interface and common functionality for training
+    machine learning models with customizable metrics and callbacks.
+
+    Parameters
+    ----------
+    config : TrainingConfig
+        Training configuration.
+    callbacks : list[Callback], optional
+        List of training callbacks.
+
+    Attributes
+    ----------
+    _device : torch.device
+        Training device (CPU/GPU).
+    _config : TrainingConfig
+        Training configuration.
+    _callbacks : list[Callback]
+        List of training callbacks.
+
+    Methods
+    -------
+    train_epoch(model, dataloader, optimizer, epoch)
+        Train model for one epoch.
+    compute_loss(output, target)
+        Compute loss for current batch.
+    compute_accuracy(output, target)
+        Compute accuracy for current batch.
+
+    Examples
+    --------
+    >>> trainer = TorchTrainer(config)
+    >>> metrics = trainer.train_epoch(model, dataloader, optimizer, epoch)
+    """
 
     def __init__(
         self,

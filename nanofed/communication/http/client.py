@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
+from typing import Any, TypeAlias, cast
 
 import aiohttp
+import numpy as np
 import torch
 
 from nanofed.communication.http.types import (
@@ -11,7 +11,12 @@ from nanofed.communication.http.types import (
     ServerModelUpdateRequest,
 )
 from nanofed.core import ModelProtocol, NanoFedError
-from nanofed.utils import Logger, log_exec
+from nanofed.utils import Logger, get_current_time, log_exec
+
+TensorLike: TypeAlias = (
+    torch.Tensor | list[float] | list[list[float]] | float | int
+)
+ModelState: TypeAlias = dict[str, list[float] | list[list[float]]]
 
 
 @dataclass(slots=True, frozen=True)
@@ -24,7 +29,36 @@ class ClientEndpoints:
 
 
 class HTTPClient:
-    """HTTP client for communication."""
+    """Asynchronous HTTP client for FL communication.
+
+    Handles communication between client and serevr for model updates, training
+    coordination, and status checks using HTTP protocol.
+
+    Parameters
+    ----------
+    server_url: str
+        Base URL of the FL server.
+    client_id: str
+        Unique identifier for this client.
+    endpoints: ClientEndpoints, optional
+        Custom endpoint configuration.
+    timeout: int, default=300
+        Request timeout in seconds.
+
+    Attributes
+    ----------
+    _current_round : int
+        Current training round number.
+    _session: aiohttp.ClientSession
+        Aiohttp client session.
+
+    Examples
+    --------
+    >>> async with HTTPClient("http://localhost:8080", "client1") as client:
+    ...     model_state, round_num = await client.fetch_global_model()
+    ...     # Train local model
+    ...     await client.submit_update(model, metrics)
+    """
 
     def __init__(
         self,
@@ -97,9 +131,22 @@ class HTTPClient:
                     return model_state, self._current_round
 
             except aiohttp.ClientError as e:
-                raise NanoFedError(f"HTTP error: {str(e)}")
+                raise NanoFedError(f"HTTP error: {str(e)}") from e
             except Exception as e:
-                raise NanoFedError(f"Failed to fetch global model: {str(e)}")
+                raise NanoFedError(
+                    f"Failed to fetch global model: {str(e)}"
+                ) from e
+
+    def _convert_tensor(
+        self, value: TensorLike
+    ) -> list[float] | list[list[float]]:
+        if isinstance(value, torch.Tensor):
+            arr = value.cpu().detach().numpy()
+            return cast(list[float] | list[list[float]], arr.tolist())
+        elif isinstance(value, (list, np.ndarray)):
+            return value
+        elif isinstance(value, (int, float)):
+            return [float(value)]
 
     @log_exec
     async def submit_update(
@@ -112,8 +159,8 @@ class HTTPClient:
 
             try:
                 state_dict = model.state_dict()
-                model_state = {
-                    key: value.cpu().numpy().tolist()
+                model_state: ModelState = {
+                    key: self._convert_tensor(value)
                     for key, value in state_dict.items()
                 }
 
@@ -122,7 +169,7 @@ class HTTPClient:
                     "round_number": self._current_round,
                     "model_state": model_state,
                     "metrics": metrics,
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_current_time().isoformat(),
                 }
 
                 url = self._get_url(self._endpoints.submit_update)
@@ -140,9 +187,9 @@ class HTTPClient:
                     return data["accepted"]
 
             except aiohttp.ClientError as e:
-                raise NanoFedError(f"HTTP error: {str(e)}")
+                raise NanoFedError(f"HTTP error: {str(e)}") from e
             except Exception as e:
-                raise NanoFedError(f"Failed to submit update: {str(e)}")
+                raise NanoFedError(f"Failed to submit update: {str(e)}") from e
 
     async def check_server_status(self) -> bool:
         if self._session is None:
@@ -157,7 +204,7 @@ class HTTPClient:
                     )
 
                 data = await response.json()
-                return data.get("is_training_done", False)
+                return bool(data.get("is_training_done", False))
 
         except aiohttp.ClientError as e:
-            raise NanoFedError(f"HTTP error: {str(e)}")
+            raise NanoFedError(f"HTTP error: {str(e)}") from e
