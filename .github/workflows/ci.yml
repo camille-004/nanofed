@@ -36,6 +36,11 @@ jobs:
           pip install numpy
           $HOME/.local/bin/poetry install --no-interaction --with ml --no-root
 
+      - name: Verify PyTorch and NumPy
+        run: |
+          python -c "import numpy; print(f'NumPy: {numpy.__version__}')"
+          python -c "import torch; print(f'PyTorch: {torch.__version__}')"
+
       - name: Install package
         run: $HOME/.local/bin/poetry install --no-interaction --only-root
 
