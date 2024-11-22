@@ -34,7 +34,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           pip install numpy
-          $HOME/.local/bin/poetry install --no-interaction --without ml --no-root
+          $HOME/.local/bin/poetry install --no-interaction --with ml --no-root
 
       - name: Install package
         run: $HOME/.local/bin/poetry install --no-interaction --only-root
