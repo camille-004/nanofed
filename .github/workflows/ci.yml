@@ -34,12 +34,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip setuptools wheel
           pip install numpy
-          $HOME/.local/bin/poetry install --no-interaction --with ml --no-root
+          $HOME/.local/bin/poetry install --no-interaction --without ml --no-root
 
-      - name: Verify PyTorch and NumPy
+      - name: Verify NumPy
         run: |
           python -c "import numpy; print(f'NumPy: {numpy.__version__}')"
-          python -c "import torch; print(f'PyTorch: {torch.__version__}')"
 
       - name: Install package
         run: $HOME/.local/bin/poetry install --no-interaction --only-root
