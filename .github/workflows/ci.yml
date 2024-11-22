@@ -30,8 +30,10 @@ jobs:
           $HOME/.local/bin/poetry config virtualenvs.create false
           $HOME/.local/bin/poetry config installer.max-workers 10
 
-      - name: Install dependencies without PyTorch
+      - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install numpy
           $HOME/.local/bin/poetry install --no-interaction --without ml --no-root
 
       - name: Install package
