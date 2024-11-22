@@ -9,16 +9,6 @@ help:
 	@echo "  format      - Format code with ruff"
 	@echo "  clean       - Clean up cache and build files"
 	@echo ""
-	@echo "Docker Commands:"
-	@echo "  docker-build    - Build Docker development image"
-	@echo "  docker-dev      - Start development shell in Docker"
-	@echo "  docker-test     - Run tests in Docker"
-	@echo "  docker-lint     - Run linters in Docker"
-	@echo "  run-example     - Run MNIST example in Docker"
-	@echo ""
-	@echo "Package Management:"
-	@echo "  build       - Build package distribution"
-	@echo "  publish     - Publish package to PyPI"
 
 install:
 	poetry install
@@ -57,27 +47,6 @@ build: clean
 
 publish: build
 	poetry publish
-
-# Docker commands
-docker-build:
-	docker-compose build
-
-docker-dev:
-	docker-compose run --rm dev
-
-docker-test:
-	docker-compose run --rm dev poetry run pytest
-
-docker-lint:
-	docker-compose run --rm dev poetry run ruff check .
-	docker-compose run --rm dev poetry run mypy nanofed
-
-docker-clean:
-	docker-compose down -v
-	docker system prune -f
-
-run-example:
-	docker-compose run --rm dev python examples/mnist/run_experiment.py
 
 setup-pre-commit:
 	poetry run pre-commit install
