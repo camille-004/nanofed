@@ -36,10 +36,6 @@ jobs:
           pip install numpy
           $HOME/.local/bin/poetry install --no-interaction --without ml --no-root
 
-      - name: Verify NumPy
-        run: |
-          python -c "import numpy; print(f'NumPy: {numpy.__version__}')"
-
       - name: Install package
         run: $HOME/.local/bin/poetry install --no-interaction --only-root
 
