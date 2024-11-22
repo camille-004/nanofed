@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Literal, TypedDict
+from typing import Any, TypedDict
 
 import torch
 
@@ -10,16 +10,6 @@ class ModelConfig(TypedDict):
     name: str
     version: str
     architecture: dict[str, Any]
-
-
-class TrainingConfig(TypedDict):
-    """Type definition for training configuration."""
-
-    epochs: int
-    batch_size: int
-    learning_rate: float
-    optimizer: Literal["adam", "sgd"]
-    device: Literal["cpu", "cuda"]
 
 
 class ModelUpdate(TypedDict):
