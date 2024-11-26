@@ -90,3 +90,58 @@ async def run_client(client_id: str, server_url: str):
 
 if __name__ == "__main__":
     asyncio.run(run_client("client1", "http://localhost:8080"))
+
+---
+
+## 🛠️ Getting Help
+
+Need assistance? Here are some helpful resources:
+
+| Resource               | Description                                    |
+|------------------------|------------------------------------------------|
+| 📚 **[Documentation](https://nanofed.readthedocs.io)** | Learn how to use NanoFed effectively.          |
+| 🐛 **[Issue Tracker](https://github.com/camille-004/nanofed/issues)**   | Report bugs or request features.               |
+| 🛠️ **[Source Code](https://github.com/camille-004/nanofed)**           | Browse the NanoFed repository on GitHub.       |
+
+---
+
+## ⚖️ License
+
+NanoFed is licensed under the **GNU General Public License (GPL-3.0)**.
+See the [LICENSE](https://github.com/camille-004/nanofed/blob/main/LICENSE) file for details.
+
+---
+
+## 👩‍💻 Contributing
+
+Contributions are welcome! Please refer to our [contribution guidelines](https://github.com/camille-004/nanofed/blob/main/CONTRIBUTING.md).
+
+---
+
+## 🛠️ Development Roadmap
+
+### ✅ Completed in v0.1.0
+**Core Features for V1**
+- Basic client-server architecture with HTTP communication
+- Simple global model management
+- Basic FedAvg implementation
+- Local training support
+- Support for PyTorch models
+- Synchronous training (all clients must complete before aggregation)
+- Basic error handling and logging
+
+---
+
+### 🚀 Future Enhancements (Out of Scope for V1)
+**Planned Features**
+- Advanced privacy features: Differential Privacy (DP), Secure Multiparty Computation (MPC), Homomorphic Encryption (HE)
+- Asynchronous updates for faster and more flexible training
+- Non-IID data handling for diverse client datasets
+- Custom aggregation strategies for specific use cases
+- gRPC implementation for high-performance communication
+- Model compression techniques to reduce bandwidth usage
+- Fault tolerance mechanisms for unreliable clients or servers
+
+---
+
+> Made with ❤️ and 🧠 by [Camille Dunning](https://github.com/camille-004).
