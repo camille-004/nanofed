@@ -2,10 +2,17 @@
 NanoFed - Federated Learning Library
 ====================================
 
-.. note::
-   **Version**: 0.1.0 |
-   **License**: GPL-3.0 |
-   **Python**: >=3.10
+.. image:: https://img.shields.io/github/actions/workflow/status/camille-004/nanofed/ci.yml?style=for-the-badge
+   :alt: GitHub Actions Workflow Status
+
+.. image:: https://img.shields.io/readthedocs/nanofed?style=for-the-badge
+   :alt: Read the Docs
+
+.. image:: https://img.shields.io/github/license/camille-004/nanofed?style=for-the-badge
+   :alt: GitHub License
+
+.. image:: https://img.shields.io/pypi/pyversions/nanofed?style=for-the-badge
+   :alt: PyPI - Python Version
 
 ----
 
