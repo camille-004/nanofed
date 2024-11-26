@@ -1,15 +1,5 @@
 .PHONY: install dev test lint format clean build docs docker-build docker-dev docker-test docker-lint run-example help
 
-help:
-	@echo "Available commands:"
-	@echo "Local Development:"
-	@echo "  install      - Install dependencies using poetry"
-	@echo "  test        - Run tests"
-	@echo "  lint        - Run linters (ruff, mypy)"
-	@echo "  format      - Format code with ruff"
-	@echo "  clean       - Clean up cache and build files"
-	@echo ""
-
 install:
 	poetry install
 
@@ -17,12 +7,12 @@ test:
 	poetry run pytest
 
 lint:
-	poetry run ruff check .
+	poetry run ruff check nanofed/ tests/
 	poetry run mypy nanofed
 
 format:
-	poetry run ruff format .
-	poetry run ruff check --fix .
+	poetry run ruff format nanofed/ tests/
+	poetry run ruff check --fix nanofed/ tests/
 
 clean:
 	# Clean Python cache
@@ -48,10 +38,13 @@ build: clean
 publish: build
 	poetry publish
 
+docs:
+	poetry run sphinx-build -b html docs/source docs/build/html
+
+docs-serve: docs
+	@echo "Serving documentation at http://localhost:8000"
+	@cd docs/build/html && python -m http.server 8000
+
 setup-pre-commit:
 	poetry run pre-commit install
 	poetry run pre-commit run --all-files
-
-ci-check: lint test build
-
-.DEFAULT_GOAL := help
