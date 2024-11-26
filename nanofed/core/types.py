@@ -1,15 +1,7 @@
 from datetime import datetime
-from typing import Any, TypedDict
+from typing import TypedDict
 
 import torch
-
-
-class ModelConfig(TypedDict):
-    """Type definition for model configuration."""
-
-    name: str
-    version: str
-    architecture: dict[str, Any]
 
 
 class ModelUpdate(TypedDict):

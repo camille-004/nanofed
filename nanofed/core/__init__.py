@@ -1,6 +1,6 @@
 from .exceptions import AggregationError, ModelManagerError, NanoFedError
 from .interfaces import AggregatorProtoocol, ModelProtocol, TrainerProtocol
-from .types import ModelConfig, ModelUpdate
+from .types import ModelUpdate
 
 __all__ = [
     # Exceptions
@@ -12,6 +12,5 @@ __all__ = [
     "AggregatorProtoocol",
     "TrainerProtocol",
     # Types
-    "ModelConfig",
     "ModelUpdate",
 ]

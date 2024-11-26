@@ -34,6 +34,14 @@ class TrainingMetrics:
     batch: int
     samples_processed: int
 
+    def to_dict(self) -> dict[str, float | int]:
+        """Convert TrainingMetrics to a dictionary"""
+        return {
+            "loss": self.loss,
+            "accuracy": self.accuracy,
+            "samples_processed": self.samples_processed,
+        }
+
 
 class Callback(Protocol):
     """Protocol for training callbacks."""

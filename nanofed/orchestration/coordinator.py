@@ -121,9 +121,7 @@ class Coordinator:
 
     async def _wait_for_clients(self, timeout: int) -> bool:
         """Wait for minimum number of clients to complete round."""
-        with self._logger.context(
-            "coordinator", f"round_{self._current_round}"
-        ):
+        with self._logger.context("coordinator"):
             start_time = get_current_time()
             required_clients = int(
                 self._config.min_clients * self._config.min_completion_rate

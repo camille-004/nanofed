@@ -10,7 +10,6 @@
 - Local training support with PyTorch integration
 - Synchronous training coordination
 - Basic error handling and logging
-- CLI for running server and clients
 - MNIST example implementation
 - Comprehensive test suite
 - Type checking with MyPy
