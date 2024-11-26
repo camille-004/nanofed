@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from typing import Any, TypeAlias, cast
 
@@ -11,6 +12,7 @@ from nanofed.communication.http.types import (
     ServerModelUpdateRequest,
 )
 from nanofed.core import ModelProtocol, NanoFedError
+from nanofed.trainer.base import TrainingMetrics
 from nanofed.utils import Logger, get_current_time, log_exec
 
 TensorLike: TypeAlias = (
@@ -76,8 +78,10 @@ class HTTPClient:
         # State tracking
         self._current_round: int = 0
         self._session: aiohttp.ClientSession | None = None
+        self._is_training_done: bool = False
 
     async def __aenter__(self) -> "HTTPClient":
+        self._logger.info(f"Initializing HTTP client for {self._client_id}")
         if self._session is None:
             self._session = aiohttp.ClientSession()
         return self
@@ -88,6 +92,7 @@ class HTTPClient:
         exc_val: BaseException | None,
         exc_tb: Any,
     ) -> None:
+        self._logger.info(f"Closing HTTP client for {self._client_id}")
         if self._session:
             await self._session.close()
             self._session = None
@@ -104,6 +109,7 @@ class HTTPClient:
 
             try:
                 url = self._get_url(self._endpoints.get_model)
+                self._logger.info(f"Fetching global model from {url}...")
                 async with self._session.get(url) as response:
                     if response.status != 200:
                         raise NanoFedError(
@@ -122,6 +128,7 @@ class HTTPClient:
                             "Invalid server response: missing required fields"
                         )
 
+                    self._logger.info("Fetched global model.")
                     model_state = {
                         key: torch.tensor(value)
                         for key, value in data["model_state"].items()
@@ -158,11 +165,20 @@ class HTTPClient:
                 raise NanoFedError("Client session not initialized")
 
             try:
+                if self._is_training_done:
+                    self._logger.info(
+                        "Training is already complete. Skipped update."
+                    )
+                    return False
+
                 state_dict = model.state_dict()
                 model_state: ModelState = {
                     key: self._convert_tensor(value)
                     for key, value in state_dict.items()
                 }
+
+                if isinstance(metrics, TrainingMetrics):
+                    metrics = metrics.to_dict()
 
                 update: ClientModelUpdateRequest = {
                     "client_id": self._client_id,
@@ -173,6 +189,9 @@ class HTTPClient:
                 }
 
                 url = self._get_url(self._endpoints.submit_update)
+                self._logger.info(
+                    f"Submitting update to {url} for round {self._current_round}"  # noqa
+                )
                 async with self._session.post(url, json=update) as response:
                     if response.status != 200:
                         raise NanoFedError(f"Server error: {response.status}")
@@ -204,7 +223,20 @@ class HTTPClient:
                     )
 
                 data = await response.json()
-                return bool(data.get("is_training_done", False))
+                self._is_training_done = bool(
+                    data.get("is_training_done", False)
+                )
+                return self._is_training_done
 
         except aiohttp.ClientError as e:
             raise NanoFedError(f"HTTP error: {str(e)}") from e
+
+    async def wait_for_completion(self, poll_interval: int = 10) -> None:
+        """Poll the server periodically to check if training is complete."""
+        self._logger.info("Waiting for training to compelte...")
+        while not self._is_training_done:
+            self._logger.info("Checking server training status...")
+            await self.check_server_status()
+            if not self._is_training_done:
+                await asyncio.sleep(poll_interval)
+        self._logger.info("Training completed. Client can safely terminate.")

@@ -83,6 +83,7 @@ class HTTPServer:
         self._is_training_done = False
 
     def _setup_routes(self) -> None:
+        self._logger.debug("Setting up routes for HTTP server.")
         self._app.router.add_get(
             self._endpoints.get_model, self._handle_get_model
         )
@@ -104,15 +105,29 @@ class HTTPServer:
             return value
         elif isinstance(value, (int, float)):
             return [float(value)]
-        raise ValueError(f"Unsupported type for conversion: {type(value)}")
 
     async def _handle_test(self, request: web.Request) -> web.Response:
         return web.Response(text="Server is running")
 
     async def _handle_get_model(self, request: web.Request) -> web.Response:
         """Handle request for global model."""
-        with self._logger.context("server.http"):
+        with self._logger.context("server.http", "get_model"):
+            self._logger.debug("Processing /model request.")
             try:
+                if self._is_training_done:
+                    self._logger.info(
+                        "Training complete. Sending termination signal."
+                    )
+                    return web.json_response(
+                        {
+                            "status": "terminated",
+                            "message": "Training is complete",
+                            "timestamp": get_current_time().isoformat(),
+                            "model_state": None,
+                            "round_number": -1,
+                        }
+                    )
+
                 version = self._model_manager.current_version
                 if version is None:
                     version = self._model_manager.load_model()
@@ -121,7 +136,6 @@ class HTTPServer:
                     f"Serving model version {version.version_id}"
                 )
 
-                # Convert model parameters to list for JSON serialization
                 state_dict = self._model_manager._model.state_dict()
                 model_state = {
                     key: self._convert_tensor(value)
@@ -136,6 +150,9 @@ class HTTPServer:
                     "round_number": self._current_round,
                     "version_id": version.version_id,
                 }
+                self._logger.debug(
+                    f"Model response prepared for version {version.version_id}"
+                )
                 return web.json_response(response)
 
             except Exception as e:
@@ -153,7 +170,8 @@ class HTTPServer:
         self, request: web.Request
     ) -> web.Response:
         """Handle model update submission from client."""
-        with self._logger.context("server.http"):
+        with self._logger.context("server.http", "submit_update"):
+            self._logger.debug("Processing /update request.")
             try:
                 data: dict[str, Any] = await request.json()
 
@@ -188,6 +206,10 @@ class HTTPServer:
 
                 async with self._lock:
                     if update["round_number"] != self._current_round:
+                        self._logger.warning(
+                            f"Udpate round mismatch: expected {self._current_round}, "  # noqa
+                            f"got {update['round_number']} from client {update['client_id']}"  # noqa
+                        )
                         return web.json_response(
                             {
                                 "status": "error",
@@ -199,6 +221,9 @@ class HTTPServer:
 
                     client_id = update["client_id"]
                     self._updates[client_id] = update
+                    self._logger.info(
+                        f"Accepted update from client {client_id} for round in {self._current_round}"  # noqa
+                    )
 
                     response: ModelUpdateResponse = {
                         "status": "success",
@@ -221,6 +246,7 @@ class HTTPServer:
                 )
 
     async def _handle_get_status(self, request: web.Request) -> web.Response:
+        self._logger.info("Processing /status request.")
         return web.json_response(
             {
                 "status": "success",
@@ -240,6 +266,7 @@ class HTTPServer:
 
     async def start(self) -> None:
         """Start HTTP server."""
+        self._logger.info("Starting HTTP server...")
         self._runner = web.AppRunner(self._app)
         await self._runner.setup()
         self._site = web.TCPSite(
@@ -250,6 +277,7 @@ class HTTPServer:
             reuse_port=True,
         )
         await self._site.start()
+        self._logger.info(f"HTTP server started on {self._host}:{self._port}")
 
     async def stop(self) -> None:
         """Stop HTTP server."""

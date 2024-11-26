@@ -19,6 +19,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
+[tool.poetry.scripts]
+nanofed = "nanofed.cli:main"
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 numpy = "^2.1.2"
@@ -42,7 +45,6 @@ pytest = "^8.2.2"
 pytest-mock = "^3.14.0"
 pytest-asyncio = "^0.24.0"
 trio = "^0.27.0"
-types-PyYAML = "^6.0.12.20240917"
 pytest-aiohttp = "^1.0.5"
 setuptools = "^75.6.0"
 

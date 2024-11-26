@@ -1,12 +1,31 @@
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import torch
 
-from nanofed.core import ModelConfig, ModelManagerError, ModelProtocol
+from nanofed.core import ModelManagerError, ModelProtocol
 from nanofed.utils import Logger, get_current_time, log_exec
+
+
+def make_json_serializable(
+    data: Any,
+) -> dict[str, Any] | list[Any] | str | int | float | bool | None:
+    """Recursively convert data to JSON-serializable types."""
+    if isinstance(data, dict):
+        return {
+            key: make_json_serializable(value) for key, value in data.items()
+        }
+    elif isinstance(data, list):
+        return [make_json_serializable(item) for item in data]
+    elif hasattr(data, "__dataclass_fields__"):
+        return make_json_serializable(asdict(data))
+    elif isinstance(data, (int, float, str, bool, type(None))):
+        return data
+    else:
+        return str(data)
 
 
 @dataclass(slots=True, frozen=True)
@@ -15,7 +34,7 @@ class ModelVersion:
 
     version_id: str
     timestamp: datetime
-    config: ModelConfig
+    config: dict[str, Any]
     path: Path
 
 
@@ -68,6 +87,12 @@ class ModelManager:
         self._models_dir.mkdir(parents=True, exist_ok=True)
         self._configs_dir.mkdir(parents=True, exist_ok=True)
 
+        # Make sure an initial model exists if no versions are present
+        if not self.list_versions():
+            self._logger.info("No model versions found. Saving initial model.")
+            default_config = {"name": "default", "version": "1.0"}
+            self.save_model(config=default_config)
+
     @property
     def current_version(self) -> ModelVersion | None:
         return self._current_version
@@ -80,7 +105,7 @@ class ModelManager:
 
     @log_exec
     def save_model(
-        self, config: ModelConfig, metrics: dict[str, float] | None = None
+        self, config: dict[str, Any], metrics: dict[str, float] | None = None
     ) -> ModelVersion:
         """Save current model state with configuration."""
         with self._logger.context("model_manager", "save"):
@@ -89,16 +114,23 @@ class ModelManager:
             model_path = self._models_dir / f"{version_id}.pt"
             torch.save(self._model.state_dict(), model_path)
 
+            config_dict = make_json_serializable(config)
+
             config_data = {
                 "version_id": version_id,
                 "timestamp": get_current_time().isoformat(),
-                "config": config,
+                "config": config_dict,
                 "metrics": metrics or {},
             }
 
             config_path = self._configs_dir / f"{version_id}.json"
-            with open(config_path, "w") as f:
-                json.dump(config_data, f, indent=2)
+            try:
+                with open(config_path, "w") as f:
+                    json.dump(config_data, f, indent=2)
+            except TypeError as e:
+                raise ModelManagerError(
+                    f"Failed to serialize config data: {e}"
+                ) from e
 
             version = ModelVersion(
                 version_id=version_id,
