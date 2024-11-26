@@ -14,12 +14,15 @@ NanoFed - Federated Learning Library
 .. image:: https://img.shields.io/pypi/pyversions/nanofed?style=for-the-badge
    :alt: PyPI - Python Version
 
+.. image:: https://img.shields.io/pypi/status/nanofed?style=for-the-badge
+   :alt: PyPI - Status
+
 ----
 
-.. admonition:: Alpha Release
+.. admonition:: Beta Release
    :class: caution
 
-   NanoFed is currently in alpha. APIs may change in future versions.
+   NanoFed is currently in beta. APIs may change in future versions.
 
 Overview
 --------
@@ -197,7 +200,7 @@ Getting Help
 
 .. warning::
 
-   This is an alpha release. While the core functionality is stable, APIs may change
+   This is an beta release. While the core functionality is stable, APIs may change
    in future versions. Please report any issues you encounter.
 
 License
