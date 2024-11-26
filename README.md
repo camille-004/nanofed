@@ -90,6 +90,7 @@ async def run_client(client_id: str, server_url: str):
 
 if __name__ == "__main__":
     asyncio.run(run_client("client1", "http://localhost:8080"))
+```
 
 ---
 
