@@ -21,7 +21,6 @@ classifiers = [
 
 [tool.poetry.scripts]
 nanofed = "nanofed.cli:main"
-docs = "sphinx-build -b html docs/source docs/build"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
