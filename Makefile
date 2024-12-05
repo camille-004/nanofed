@@ -7,12 +7,12 @@ test:
 	poetry run pytest
 
 lint:
-	poetry run ruff check nanofed/ tests/
+	poetry run ruff check nanofed/ scripts/ tests/
 	poetry run mypy nanofed
 
 format:
-	poetry run ruff format nanofed/ tests/
-	poetry run ruff check --fix nanofed/ tests/
+	poetry run ruff format nanofed/ scripts/ tests/
+	poetry run ruff check --fix nanofed/ scripts/ tests/
 
 clean:
 	# Clean Python cache
