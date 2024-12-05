@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nanofed"
-version = "0.1.1"
+version = "0.1.0"
 description = "A lightweight federated learning library"
 authors = ["camille-004 <dunningcamille@gmail.com>"]
 readme = "README.md"
@@ -54,6 +54,7 @@ sphinx-copybutton = "^0.5.2"
 sphinx-tabs = "^3.4.7"
 sphinx-togglebutton = "^0.3.2"
 sphinx-immaterial = "^0.12.4"
+tomlkit = "^0.13.2"
 
 [tool.poetry.extras]
 ml = ["torch", "torchvision"]

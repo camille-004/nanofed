@@ -48,3 +48,10 @@ docs-serve: docs
 setup-pre-commit:
 	poetry run pre-commit install
 	poetry run pre-commit run --all-files
+
+release-prepare:
+	@if [ -z "$(version)" ]; then \
+		echo "Usage: make release-prepare version=X.Y.Z"; \
+		exit 1; \
+	fi
+	poetry run python scripts/prepare_release.py $(version)
