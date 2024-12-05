@@ -10,7 +10,7 @@ from nanofed import (
     HTTPClient,
     HTTPServer,
     ModelManager,
-    run_coordinator,
+    coordinate,
 )
 from nanofed.data import load_mnist_data
 from nanofed.models import MNISTModel
@@ -113,7 +113,7 @@ async def main():
 
     # Run the coordinator and clients concurrently
     await asyncio.gather(
-        run_coordinator(coordinator),
+        coordinate(coordinator),
         run_client("client_1", "http://0.0.0.0:8080", data_dir),
         run_client("client_2", "http://0.0.0.0:8080", data_dir),
         run_client("client_3", "http://0.0.0.0:8080", data_dir),

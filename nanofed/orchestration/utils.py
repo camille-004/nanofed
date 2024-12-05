@@ -2,7 +2,7 @@ from nanofed.orchestration import Coordinator
 from nanofed.utils import Logger
 
 
-async def run_coordinator(coordinator: Coordinator) -> None:
+async def coordinate(coordinator: Coordinator) -> None:
     """Run the coordinator and consume training metrics.
 
     This function continuously starts training rounds and processes

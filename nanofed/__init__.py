@@ -4,7 +4,7 @@ from nanofed.communication import HTTPClient, HTTPServer
 from nanofed.orchestration import (
     Coordinator,
     CoordinatorConfig,
-    run_coordinator,
+    coordinate,
 )
 from nanofed.server import FedAvgAggregator, ModelManager
 from nanofed.trainer import TorchTrainer
@@ -17,7 +17,7 @@ __all__ = [
     "CoordinatorConfig",
     "FedAvgAggregator",
     "ModelManager",
-    "run_coordinator",
+    "coordinate",
 ]
 
 
