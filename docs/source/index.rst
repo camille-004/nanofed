@@ -200,7 +200,7 @@ Getting Help
 
 .. warning::
 
-   This is an beta release. While the core functionality is stable, APIs may change
+   This is a beta release. While the core functionality is stable, APIs may change
    in future versions. Please report any issues you encounter.
 
 License
@@ -212,3 +212,5 @@ NanoFed is available under the GPL-3.0 License.
    :maxdepth: 1
    :hidden:
    :caption: Documentation
+
+   getting_started/concepts
