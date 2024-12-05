@@ -29,7 +29,7 @@ class Changelog:
             if url.startswith("git@github.com:"):
                 url = url.replace("git@github.com:", "https://github.com/")
 
-            if url.endsiwth(".git"):
+            if url.endswith(".git"):
                 url = url[:-4]
 
             return url
