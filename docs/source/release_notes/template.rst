@@ -4,41 +4,61 @@ Version {version}
 Release Date: {date}
 
 🌟 Overview
------------
-..
-
-⚠️ Breaking Changes
--------------------
-..
-
-📝 Detailed Notes
------------------
-..
-
-🎁 New Features
----------------
-..
-
-🐛 Bug Fixes
 ------------
 ..
 
+⚠️ Breaking Changes
+--------------------
+..
+
+📝 Detailed Notes
+------------------
+..
+
+🎁 Features
+------------
+..
+
+🐛 Bug Fixes
+-------------
+..
+
 📚 Documentation
-----------------
+-----------------
+..
+
+🎨 Style
+---------
+..
+
+♻️ Code Refactoring
+-------------------
 ..
 
 ⚡ Performance
 --------------
 ..
 
-🔧 Maintenance
+🧪 Tests
+--------
+..
+
+📦 Build System
+----------------
+..
+
+🔄 CI Changes
 --------------
 ..
 
-🚨 Known Issues
+🔧 Maintenance
 ---------------
 ..
 
+📝 Other Changes
+----------------
+..
+
 📜 Changelog
-------------
+-------------
 .. Generated automatically from git commits

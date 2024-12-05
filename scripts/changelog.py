@@ -105,61 +105,27 @@ class Changelog:
     def generate_rst_changelog(
         self, version: str, categories: dict[str, list[dict[str, str]]]
     ) -> str:
-        """Generate RST formatted changelog."""
-        date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-        with open(self.release_notes_dir / "template.rst") as f:
-            template = f.read()
-
-        content = template.format(version=version.lstrip("v"), date=date)
-
         changelog_items = []
 
-        type_headers = {
-            "feat": "🎁 Features",
-            "fix": "🐛 Bug Fixes",
-            "docs": "📚 Documentation",
-            "style": "🎨 Style",
-            "refactor": "♻️ Code Refactoring",
-            "perf": "⚡ Performance",
-            "test": "🧪 Tests",
-            "build": "📦 Build System",
-            "ci": "🔄 CI Changes",
-            "chore": "🔧 Maintenance",
-            "other": "📝 Other Changes",
-        }
+        # Flatten all commits across categories into a single list
+        all_commits = [
+            commit for commits in categories.values() for commit in commits
+        ]
 
-        for category, commits in categories.items():
-            if commits:
-                header = type_headers.get(category, category.title())
-                changelog_items.append(f"{header}")
-                underline_length = (
-                    len(header.split(" ", 1)[1])
-                    if " " in header
-                    else len(header)
+        for commit in all_commits:
+            scope = f"({commit['scope']}) " if commit["scope"] else ""
+            commit_hash = commit["hash"]
+            if self.github_url and commit_hash:
+                changelog_items.append(
+                    f"* {scope}{commit['description']} "
+                    f"`{commit_hash} <{self.github_url}/commit/{commit_hash}>`_"  # noqa
                 )
-                changelog_items.append("~" * underline_length)
-                changelog_items.append("")
+            else:
+                changelog_items.append(
+                    f"* {scope}{commit['description']} ({commit_hash})"
+                )
 
-                for commit in commits:
-                    scope = f"({commit['scope']}) " if commit["scope"] else ""
-                    commit_hash = commit["hash"]
-                    if self.github_url and commit_hash:
-                        changelog_items.append(
-                            f"* {scope}{commit['description']} "
-                            f"`{commit_hash} <{self.github_url}/commit/{commit_hash}>`_"  # noqa
-                        )
-                    else:
-                        changelog_items.append(
-                            f"* {scope}{commit['description']} ({commit_hash})"
-                        )
-                changelog_items.append("")
-
-        changelog_section = "\n".join(changelog_items)
-        content = content.replace(
-            ".. Generated automatically from git commits", changelog_section
-        )
-        return content
+        return "\n".join(changelog_items)
 
     def generate_md_changelog(
         self, version: str, categories: dict[str, list[dict[str, str]]]
@@ -212,28 +178,83 @@ class Changelog:
 
         categories = self.categorize_commits(commits)
 
+        # Update the Markdown changelog
         md_content = self.generate_md_changelog(version, categories)
+        md_updated = False
+
         if self.changelog_path.exists():
             current_content = self.changelog_path.read_text()
-            separator = (
-                "\n# Changelog\n\n"
-                if "# Changelog" not in current_content
-                else "\n"
-            )
-            updated = current_content.replace(
-                "# Changelog\n\n", f"# Changelog\n\n{md_content}{separator}"
-            )
+
+            version_header = f"## [{version}]"
+            if version_header not in current_content:
+                if "# Changelog" in current_content:
+                    header_pos = current_content.find("# Changelog")
+                    updated = (
+                        current_content[:header_pos]
+                        + "# Changelog\n\n"
+                        + md_content
+                        + "\n"
+                        + current_content[header_pos + 10 :].lstrip()
+                    )
+                else:
+                    updated = f"# Changelog\n\n{md_content}\n"
+                self.changelog_path.write_text(updated)
+                md_updated = True
         else:
             updated = f"# Changelog\n\n{md_content}\n"
+            self.changelog_path.write_text(updated)
+            md_updated = True
 
-        self.changelog_path.write_text(updated)
+        if md_updated:
+            print(
+                f"Markdown changelog updated for version {version} "
+                f"at {self.changelog_path}"
+            )
+        else:
+            print(
+                f"Markdown changelog already up-to-date for version {version}"
+            )
 
-        rst_content = self.generate_rst_changelog(version, categories)
+        rst_changelog = self.generate_rst_changelog(version, categories)
         rst_path = self.release_notes_dir / f"v{version.lstrip('v')}.rst"
-        rst_path.write_text(rst_content)
+        rst_updated = False
 
-        print(f"Changelog updated for version {version}")
-        print(f"Location: {self.changelog_path}")
+        if not rst_path.exists():
+            template_path = self.release_notes_dir / "template.rst"
+            if template_path.exists():
+                with open(template_path) as f:
+                    template = f.read()
+            rst_content = template.format(
+                version=version.lstrip("v"),
+                date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            )
+            rst_content += rst_changelog
+            rst_path.write_text(rst_content)
+            rst_updated = True
+        else:
+            # Update existing RST file
+            rst_content = rst_path.read_text()
+            marker = ".. Generated automatically from git commits"
+            generated_changelog = self.generate_rst_changelog(
+                version, categories
+            )
+
+            if marker in rst_content:
+                before_changelog = rst_content.split(marker)[0]
+                updated_content = (
+                    f"{before_changelog}{marker}\n\n{generated_changelog}\n"
+                )
+                rst_path.write_text(updated_content)
+                rst_updated = True
+            else:
+                print(
+                    f"Warning: Could not find changelog marker in {rst_path}"
+                )
+
+        if rst_updated:
+            print(f"RST changelog updated for version {version} at {rst_path}")
+        else:
+            print(f"RST changelog already up-to-date for version {version}")
 
 
 def main() -> None:

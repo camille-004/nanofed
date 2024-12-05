@@ -1,0 +1,14 @@
+Version 0.1.3
+=================
+
+Release Date: 2024-12-05
+
+📚 Documentation
+-----------------
+Introduce release documentation, integrate release into the documentation page.
+
+📜 Changelog
+-------------
+.. Generated automatically from git commits
+
+* add release docs and fix release notes rst `6ed363a <https://github.com/camille-004/nanofed/commit/6ed363a>`_

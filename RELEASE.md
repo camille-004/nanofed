@@ -13,7 +13,7 @@ This document describes the steps to create a new release of NanoFed.
 2. **Run the automated release preparation script**
 
     ```bash
-    make release-prepare <new-version>  # e.g., make release-prepare 0.1.3
+    make release-prepare version=<new-version>  # e.g., make release-prepare version=0.1.3
     ```
     This script will:
     - Validate the version format
@@ -40,7 +40,7 @@ This document describes the steps to create a new release of NanoFed.
 
     ```bash
     git add pyproject.toml CHANGELOG.md docs/source/release_notes
-    git commit -m "chore: prepare release v<new-version>
+    git commit -m "chore: prepare release v<new-version>"
     ```
 
 4. **Create and Push Tag**

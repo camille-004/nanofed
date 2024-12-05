@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nanofed"
-version = "0.1.2"
+version = "0.1.3"
 description = "A lightweight federated learning library"
 authors = ["camille-004 <dunningcamille@gmail.com>"]
 readme = "README.md"
