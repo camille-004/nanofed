@@ -8,7 +8,7 @@ from pathlib import Path
 class Changelog:
     def __init__(self, repo_path: str = ".") -> None:
         self.repo_path = Path(repo_path)
-        self.changelog_path = self.repo_path / "CHANGELOD.md"
+        self.changelog_path = self.repo_path / "CHANGELOG.md"
 
         try:
             subprocess.check_output(["git", "rev-parse", "--git-dir"])
