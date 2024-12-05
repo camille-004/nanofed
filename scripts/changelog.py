@@ -9,6 +9,9 @@ class Changelog:
     def __init__(self, repo_path: str = ".") -> None:
         self.repo_path = Path(repo_path)
         self.changelog_path = self.repo_path / "CHANGELOG.md"
+        self.release_notes_dir = (
+            self.repo_path / "docs" / "source" / "release_notes"
+        )
         self.github_url = self._get_github_url()
 
         try:
@@ -99,7 +102,45 @@ class Changelog:
 
         return categories
 
-    def generate_changelog(
+    def generate_rst_changelog(
+        self, version: str, categories: dict[str, list[dict[str, str]]]
+    ) -> str:
+        """Generate RST formatted changelog."""
+        date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        with open(self.release_notes_dir / "template.rst") as f:
+            template = f.read()
+
+        content = template.format(version=version.lstrip("v"), date=date)
+
+        changelog_items = []
+
+        for category, commits in categories.items():
+            if commits:
+                changelog_items.append(f"{category.title()}")
+                changelog_items.append("~" * (len(category) + 2))
+                changelog_items.append("")
+
+                for commit in commits:
+                    scope = f"({commit['scope']}) " if commit["scope"] else ""
+                    commit_hash = commit["hash"]
+                    if self.github_url and commit_hash:
+                        changelog_items.append(
+                            f"* {scope}{commit['description']} "
+                            f"`{commit_hash} <{self.github_url}/commit/{commit_hash}>`_"  # noqa
+                        )
+                    else:
+                        changelog_items.append(
+                            f"* {scope}{commit['description']} ({commit_hash})"
+                        )
+                changelog_items.append("")
+
+        changelog_section = "\n".join(changelog_items)
+        content = content.replace(
+            ".. Generated automatically from git commits", changelog_section
+        )
+
+    def generate_md_changelog(
         self, version: str, categories: dict[str, list[dict[str, str]]]
     ) -> str:
         content = [
@@ -149,8 +190,8 @@ class Changelog:
             return
 
         categories = self.categorize_commits(commits)
-        new_content = self.generate_changelog(version, categories)
 
+        md_content = self.generate_md_changelog(version, categories)
         if self.changelog_path.exists():
             current_content = self.changelog_path.read_text()
             separator = (
@@ -159,12 +200,17 @@ class Changelog:
                 else "\n"
             )
             updated = current_content.replace(
-                "# Changelog\n\n", f"# Changelog\n\n{new_content}{separator}"
+                "# Changelog\n\n", f"# Changelog\n\n{md_content}{separator}"
             )
         else:
-            updated = f"# Changelog\n\n{new_content}\n"
+            updated = f"# Changelog\n\n{md_content}\n"
 
         self.changelog_path.write_text(updated)
+
+        rst_content = self.generate_rst_changelog(version, categories)
+        rst_path = self.release_notes_dir / f"v{version.lstrip('v')}.rst"
+        rst_path.write_text(rst_content)
+
         print(f"Changelog updated for version {version}")
         print(f"Location: {self.changelog_path}")
 
