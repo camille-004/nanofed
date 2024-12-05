@@ -115,10 +115,30 @@ class Changelog:
 
         changelog_items = []
 
+        type_headers = {
+            "feat": "🎁 Features",
+            "fix": "🐛 Bug Fixes",
+            "docs": "📚 Documentation",
+            "style": "🎨 Style",
+            "refactor": "♻️ Code Refactoring",
+            "perf": "⚡ Performance",
+            "test": "🧪 Tests",
+            "build": "📦 Build System",
+            "ci": "🔄 CI Changes",
+            "chore": "🔧 Maintenance",
+            "other": "📝 Other Changes",
+        }
+
         for category, commits in categories.items():
             if commits:
-                changelog_items.append(f"{category.title()}")
-                changelog_items.append("~" * (len(category) + 2))
+                header = type_headers.get(category, category.title())
+                changelog_items.append(f"{header}")
+                underline_length = (
+                    len(header.split(" ", 1)[1])
+                    if " " in header
+                    else len(header)
+                )
+                changelog_items.append("~" * underline_length)
                 changelog_items.append("")
 
                 for commit in commits:
@@ -139,6 +159,7 @@ class Changelog:
         content = content.replace(
             ".. Generated automatically from git commits", changelog_section
         )
+        return content
 
     def generate_md_changelog(
         self, version: str, categories: dict[str, list[dict[str, str]]]
