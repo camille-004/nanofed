@@ -28,10 +28,11 @@ jobs:
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           VERSION=$(poetry version -s)
-          if [ "v$Version" != "$TAG_NAME" ]; then
+          if [ "v$VERSION" != "$TAG_NAME" ]; then
             echo "Version mismatch: v$VERSION != $TAG_NAME"
             exit 1
           fi
+
   release:
     needs: validate
     runs-on: ubuntu-latest
