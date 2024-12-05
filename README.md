@@ -115,7 +115,12 @@ See the [LICENSE](https://github.com/camille-004/nanofed/blob/main/LICENSE) file
 
 ## 👩‍💻 Contributing
 
-Contributions are welcome! Please refer to our [contribution guidelines](https://github.com/camille-004/nanofed/blob/main/CONTRIBUTING.md).
+Contributions are welcome! We follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. See our [contribution guidelines](https://github.com/camille-004/nanofed/blob/main/CONTRIBUTING.md) for detailed instructions.
+
+Example commit message:
+```bash
+feat(client): add retry mechanism
+```
 
 ---
 
