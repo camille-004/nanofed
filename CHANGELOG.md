@@ -1,6 +1,12 @@
 # CHANGELOG.md
 # Changelog
 
+## [v0.1.1] - 2024-12-05
+
+### Code Refactoring
+
+- changelog typo (b32ac02)
+
 ## [0.1.0] - 2024-11-21
 
 ### Added

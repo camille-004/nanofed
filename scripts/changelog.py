@@ -9,6 +9,7 @@ class Changelog:
     def __init__(self, repo_path: str = ".") -> None:
         self.repo_path = Path(repo_path)
         self.changelog_path = self.repo_path / "CHANGELOG.md"
+        self.github_url = self._get_github_url()
 
         try:
             subprocess.check_output(["git", "rev-parse", "--git-dir"])
@@ -16,6 +17,24 @@ class Changelog:
             raise RuntimeError(
                 "Not a git repository. Please run from project root."
             ) from e
+
+    def _get_github_url(self) -> str:
+        """Get the GitHub repository URL."""
+        try:
+            url = subprocess.check_output(
+                ["git", "config", "--get", "remote.origin.url"],
+                universal_newlines=True,
+            ).strip()
+
+            if url.startswith("git@github.com:"):
+                url = url.replace("git@github.com:", "https://github.com/")
+
+            if url.endsiwth(".git"):
+                url = url[:-4]
+
+            return url
+        except subprocess.CalledProcessError:
+            return ""
 
     def get_latest_tag(self) -> str | None:
         """Get the most recent git tag."""
@@ -84,7 +103,7 @@ class Changelog:
         self, version: str, categories: dict[str, list[dict[str, str]]]
     ) -> str:
         content = [
-            f"## [{version}] - "
+            f"## [{version}]({self.github_url}/releases/tag/{version}) - "
             f"{datetime.now(timezone.utc).strftime("%Y-%m-%d")}\n"
         ]
 
@@ -107,9 +126,16 @@ class Changelog:
                 content.append(f"### {type_headers[category]}\n")
                 for commit in commits:
                     scope = f"({commit['scope']}) " if commit["scope"] else ""
-                    content.append(
-                        f"- {scope}{commit['description']} ({commit['hash']})"
-                    )
+                    commit_hash = commit["hash"]
+                    if self.github_url and commit_hash:
+                        commit_url = f"{self.github_url}/commit/{commit_hash}"
+                        content.append(
+                            f"- {scope}{commit['description']} ([{commit_hash}]({commit_url}))"  # noqa
+                        )
+                    else:
+                        content.append(
+                            f"- {scope}{commit['description']} ({commit_hash})"
+                        )
                 content.append("")
 
         return "\n".join(content)
