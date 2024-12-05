@@ -1,57 +1,57 @@
 name: Release
 
-# This workflow only triggers when you push a tag starting with 'v'
 on:
-    push:
-        tags:
-            - 'v*'
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-    changelog:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                fetch-depth: 0  # Get full git history
+  changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                python-version: "3.12"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-            - name: Install Poetry
-              run: |
-                curl -sSL https://install.python-poetry.org | python3 -
-                echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-            - name: Install dependencies
-              run: |
-                poetry install --no-interaction --without dev,ml
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --without dev,ml
 
-            - name: Update Changelog
-              run: |
-                TAG_NAME=${GITHUB_REF#refs/tags/}
-                python scripts/changelog.py $TAG_NAME
+      - name: Update Changelog
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          python scripts/changelog.py $TAG_NAME
 
-                if [[ -n $(git status --porcelain) ]]; then
-                    git config --local user.email "github-actions[bot]@users.noreply.github.com"
-                    git config --local user.name "github-actions[bot]"
-                    git add CHANGELOG.md
-                    git commit -m "chore: update changelog for $TAG_NAME"
-                    git push
-                fi
+          if [[ -n $(git status --porcelain) ]]; then
+              git config --local user.email "github-actions[bot]@users.noreply.github.com"
+              git config --local user.name "github-actions[bot]"
+              git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+              git add CHANGELOG.md
+              git commit -m "chore: update changelog for $TAG_NAME"
+              git push origin HEAD:${{ github.ref }}
+          fi
 
-            - name: Build package
-              run: poetry build
+      - name: Build package
+        run: poetry build
 
-            - name: Create Release
-              uses: softprops/action-gh-release@v2
-              with:
-                body_path: CHANGELOG.md
-                draft: false
-                prerelease: false
-                files: |
-                    dist/*.whl
-                    dist/*.tar.gz
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
