@@ -1,4 +1,4 @@
-name: Release & Changelog
+name: Release
 
 # This workflow only triggers when you push a tag starting with 'v'
 on:
