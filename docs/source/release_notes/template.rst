@@ -8,7 +8,7 @@ Release Date: {date}
 ..
 
 ⚠️ Breaking Changes
-------------------
+-------------------
 ..
 
 📝 Detailed Notes
@@ -28,7 +28,7 @@ Release Date: {date}
 ..
 
 ⚡ Performance
--------------
+--------------
 ..
 
 🔧 Maintenance

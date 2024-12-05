@@ -1,11 +1,11 @@
 Release Notes
-=============
+==============
 
 This section contains release notes for each version of NanoFed.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :caption: Versions
     :glob:
 
-    *
+    v*
