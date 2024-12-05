@@ -126,7 +126,7 @@ feat(client): add retry mechanism
 
 ## 🛠️ Development Roadmap
 
-### ✅ Completed in v0.1.0
+### ✅ Completed
 **Core Features for V1**
 - Basic client-server architecture with HTTP communication
 - Simple global model management
@@ -138,7 +138,7 @@ feat(client): add retry mechanism
 
 ---
 
-### 🚀 Future Enhancements (Out of Scope for V1)
+### 🚀 Future Enhancements
 **Planned Features**
 - Advanced privacy features: Differential Privacy (DP), Secure Multiparty Computation (MPC), Homomorphic Encryption (HE)
 - Asynchronous updates for faster and more flexible training
