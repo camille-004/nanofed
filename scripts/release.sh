@@ -32,11 +32,6 @@ validate_requirements() {
         error "Must be on main branch to release (currently on '$current_branch')"
     fi
 
-    # Check for clean working directory
-    if [ -n "$(git status --porcelain)" ]; then
-        error "Working directory must be clean"
-    fi
-
     step "Pulling latest changes from main..."
     git pull origin main
 }

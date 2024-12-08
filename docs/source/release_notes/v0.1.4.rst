@@ -1,0 +1,67 @@
+Version 0.1.4
+=================
+
+Release Date: December 08, 2024
+
+🌟 Overview
+------------
+Improves FedAvg implementation with proper weighting based on client dataset sizes, enhances model versioning, and fixes type-related issues.
+
+📝 Detailed Notes
+------------------
+Improved FedAvg implementation to properly weight client contributions based on their dataset sizes and save the client weights. Additionally, several type-related issues have been fixed.
+
+🎁 Features
+------------
+- Implemented proper dataset size-based weighting in FedAvg aggregator
+- Added client waits to training metrics
+- Enhanced model versioning with support for weighted metrics
+
+🐛 Bug Fixes
+-------------
+- Fixed averaging in FedAvg to properly weight based on client dataset sizes
+- Fixed MNIST data loader type hints
+- Fixed model versioning integration with the server and coordinator
+
+📚 Documentation
+-----------------
+- Updated the release process.
+- Updated the ``ModelManager`` section in Concepts Guide.
+
+♻️ Code Refactoring
+-------------------
+- Updated ``ModelManager`` integration with server and coordinator components.
+- Improved aggregator interface with proper weight computation abstraction.
+- Simplified checkpointing by removing redundant storage.
+
+🧪 Tests
+--------
+- Added tests for weighted FedAvg.
+- Updated test cases to verify proper client weight calculations.
+- Added test coverage for missing sample counts in metrics.
+
+📦 Build System
+----------------
+- Added an automated release script.
+
+🔧 Maintenance
+---------------
+- Fixed type checking issues.
+
+📜 Changelog
+-------------
+.. Generated automatically from git commits
+
+* template date parsing `58d0742 <https://github.com/camille-004/nanofed/commit/58d0742>`_
+* mypy issue `284148c <https://github.com/camille-004/nanofed/commit/284148c>`_
+* mypy issue `55a7c08 <https://github.com/camille-004/nanofed/commit/55a7c08>`_
+* add release command to Makefile and fix mypy error `b78a29d <https://github.com/camille-004/nanofed/commit/b78a29d>`_
+* fix mypy issue in CI `7359568 <https://github.com/camille-004/nanofed/commit/7359568>`_
+* update fedavg to properly weight clients `ac2d50c <https://github.com/camille-004/nanofed/commit/ac2d50c>`_
+* make model management less redundant `1920ffd <https://github.com/camille-004/nanofed/commit/1920ffd>`_
+* update model management concept `35378d6 <https://github.com/camille-004/nanofed/commit/35378d6>`_
+* add automated release back into changelog and prepare_relase `f46fd19 <https://github.com/camille-004/nanofed/commit/f46fd19>`_
+* add automated release `f707247 <https://github.com/camille-004/nanofed/commit/f707247>`_
+* Merge pull request #5 from camille-004/cd/fedavg-weights (6533fd1) ()
+* Merge pull request #4 from camille-004/model-management (a30e8e3) ()
+* Merge pull request #3 from camille-004/automate-release (1331db9) ()
