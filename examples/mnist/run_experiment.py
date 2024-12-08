@@ -26,7 +26,7 @@ async def run_client(client_id: str, server_url: str, data_dir: Path):
 
     # Client training configuration
     training_config = TrainingConfig(
-        epochs=1,  # Number of epochs for local training
+        epochs=2,  # Number of epochs for local training
         batch_size=256,  # Batch size
         learning_rate=0.1,  # Learning rate
         device="cpu",  # Device to use (i.e., "cpu" or "cuda")
@@ -72,7 +72,6 @@ async def run_client(client_id: str, server_url: str, data_dir: Path):
 async def main():
     base_dir = Path("runs/")  # Base directory for outputs and checkpoints
     model_dir = base_dir / "models"  # Directory to store model versions
-    checkpoint_dir = base_dir / "checkpoints"  # Directory for checkpoints
     metrics_dir = base_dir / "metrics"  # Directory for metrics
     data_dir = base_dir / "data"  # Directory containing the dataset
 
@@ -99,7 +98,6 @@ async def main():
         # 80% of clients required to complete per round:
         min_completion_rate=0.8,
         round_timeout=300,  # 5-minute timeout per round,
-        checkpoint_dir=checkpoint_dir,  # Directory for round checkpoints
         metrics_dir=metrics_dir,  # Directory for round metrics
     )
 
