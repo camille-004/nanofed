@@ -58,11 +58,6 @@ jobs:
         run: |
           poetry install --no-interaction --without dev,ml
 
-      - name: Update Changelog
-        run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          python scripts/changelog.py $TAG_NAME
-
       - name: Build package
         run: poetry build
 
