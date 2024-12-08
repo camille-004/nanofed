@@ -171,7 +171,7 @@ class ModelManager:
                 state_dict = torch.load(model_path, weights_only=True)
                 self._model.load_state_dict(state_dict)
             except Exception as e:
-                raise ModelManagerError(f"Failde to load model: {e}") from e
+                raise ModelManagerError(f"Failed to load model: {e}") from e
 
             version = ModelVersion(
                 version_id=config_data["version_id"],
