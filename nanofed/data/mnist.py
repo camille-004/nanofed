@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 from torch.utils.data import DataLoader, Subset
@@ -28,9 +29,10 @@ def load_mnist_data(
 
     if subset_fraction < 1.0:
         num_samples = int(len(dataset) * subset_fraction)
-        subset_indices = np.random.choice(
+        indices_array = np.random.choice(
             a=len(dataset), size=num_samples, replace=False
-        ).tolist()
+        )
+        subset_indices: Sequence[int] = list(map(int, indices_array))
         dataset = Subset(dataset, subset_indices)
 
     return DataLoader(
