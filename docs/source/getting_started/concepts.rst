@@ -434,8 +434,57 @@ The server combines client updates using FedAvg, or any other aggregator:
                 tensor = self._to_tensor(value)
                 state_agg[key] += tensor * weight
 
-Model Management
-----------------
+Model Manager
+--------------
+
+The ``ModelManager`` is a component in NanoFed's server architecture that handles versioning, persistence, and distribution of models throughout federated learning. It acts as the source of truth for the global model state and maintains a complete history of model evolution throughout training.
+
+.. md-mermaid::
+    :name: Model Management Flow
+    :class: align-center
+
+    flowchart TB
+        subgraph Server ["Server"]
+            direction TB
+            MM["ModelManager"] --> |"Loads/Saves"| MS[("Model Storage")]
+            AGG["Aggregator"] --> |"Gets current model"| MM
+            AGG --> |"Saves aggregated model"| MM
+            MM --> |"Provides model"| SRV["HTTP Server"]
+        end
+
+        subgraph Clients ["Clients"]
+            C1["Client 1"] --> |"GET /model"| SRV
+            C2["Client 2"] --> |"GET /model"| SRV
+            C3["Client 3"] --> |"GET /model"| SRV
+
+            C1 --> |"POST /update"| AGG
+            C2 --> |"POST /update"| AGG
+            C3 --> |"POST /update"| AGG
+        end
+
+        subgraph Storage ["Storage"]
+            MS --- Models["Models Directory (.pt)"]
+            MS --- Configs["Configs Directory (.json)"]
+        end
+
+The ``ModelManager`` integrates with other server components in several ways:
+
+1. **HTTP Server Integration**
+
+    .. code-block:: python
+
+        server = HTTPServer(
+            host="0.0.0.0",
+            port=8080,
+            model_manager=model_manager,  # Provides models for client requests
+            max_request_size=100 * 1024 * 1024,
+        )
+
+2. **Aggregator Interaction**
+
+    - After each round of aggregation, the aggregator saves the new global model through the ``ModelManager``
+    - The ModelManager assigns a new version ID and persists both model state and metadata
+    - This new version becomes available for the next round of training
 
 Version Control
 ~~~~~~~~~~~~~~~
