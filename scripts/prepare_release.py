@@ -1,5 +1,6 @@
 import re
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import tomlkit
@@ -17,6 +18,32 @@ def validate_version(version: str) -> bool:
     """Validate semantic version format."""
     pattern = r"^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$"
     return bool(re.match(pattern, version))
+
+
+def create_release_notes(version: str) -> None:
+    """Create release notes file for the new version from template."""
+    release_notes_dir = Path("docs/source/release_notes")
+    template_path = release_notes_dir / "template.rst"
+    release_notes_path = release_notes_dir / f"v{version}.rst"
+
+    if release_notes_path.exists():
+        return
+
+    if not template_path.exists():
+        print(f"❌ Template file not found at {template_path}")
+        return
+
+    today = datetime.now(timezone.utc).strftime("%B %d, %Y")
+
+    # Read and update template content
+    template_content = template_path.read_text()
+    release_content = template_content.replace("{version}", version).replace(
+        "{release_date}", today
+    )
+
+    # Write the new release notes file
+    release_notes_path.write_text(release_content)
+    print(f"✅ Created release notes at {release_notes_path}")
 
 
 def run_checks() -> tuple[bool, list[str]]:
@@ -85,7 +112,7 @@ def main() -> None:
 
     current_version = get_current_version()
     print(f"Current version: {current_version}")
-    print("Preparing release: args.new_version")
+    print(f"Preparing release: {args.new_version}")
 
     success, checks = run_checks()
     print("\nPre-release checks:")
@@ -99,16 +126,13 @@ def main() -> None:
     # Update version
     subprocess.run(["poetry", "version", args.new_version], check=True)
 
+    # Create release notes template
+    create_release_notes(args.new_version)
+
     print("\n✅ Ready for release!")
     print("\nNext steps:")
-    print(
-        f"1. Commit the version change: git commit -am 'chore: bump version "
-        f"to {args.new_version}'"
-    )
-    print(
-        f"2. Create and push tag: git tag -a v{args.new_version} -m 'Release "
-        f"v{args.new_version}' && git push --tags"
-    )
+    print("1. Review and update the release notes file")
+    print("2. Run `make release` to complete the release process")
 
 
 if __name__ == "__main__":

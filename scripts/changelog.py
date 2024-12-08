@@ -215,46 +215,31 @@ class Changelog:
                 f"Markdown changelog already up-to-date for version {version}"
             )
 
-        rst_changelog = self.generate_rst_changelog(version, categories)
         rst_path = self.release_notes_dir / f"v{version.lstrip('v')}.rst"
-        rst_updated = False
-
         if not rst_path.exists():
-            template_path = self.release_notes_dir / "template.rst"
-            if template_path.exists():
-                with open(template_path) as f:
-                    template = f.read()
-            rst_content = template.format(
-                version=version.lstrip("v"),
-                date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            )
-            rst_content += rst_changelog
-            rst_path.write_text(rst_content)
-            rst_updated = True
-        else:
-            # Update existing RST file
-            rst_content = rst_path.read_text()
-            marker = ".. Generated automatically from git commits"
-            generated_changelog = self.generate_rst_changelog(
-                version, categories
-            )
+            print(f"Warning: Release notes file not found at {rst_path}")
+            print("Please run make release-prepare first.")
+            return
 
-            if marker in rst_content:
-                before_changelog = rst_content.split(marker)[0]
-                updated_content = (
-                    f"{before_changelog}{marker}\n\n{generated_changelog}\n"
-                )
-                rst_path.write_text(updated_content)
-                rst_updated = True
-            else:
-                print(
-                    f"Warning: Could not find changelog marker in {rst_path}"
-                )
+        rst_content = rst_path.read_text()
+        marker = ".. Generated automatically from git commits"
+        generated_changelog = self.generate_rst_changelog(version, categories)
 
-        if rst_updated:
+        if marker in rst_content:
+            before_changelog = rst_content.split(marker)[0]
+            updated_content = (
+                f"{before_changelog}{marker}\n\n{generated_changelog}\n"
+            )
+            rst_path.write_text(updated_content)
             print(f"RST changelog updated for version {version} at {rst_path}")
         else:
-            print(f"RST changelog already up-to-date for version {version}")
+            updated_content = (
+                f"{rst_content}\n\n{marker}\n\n{generated_changelog}\n"
+            )
+            rst_path.write_text(updated_content)
+            print(
+                f"RST changelog appended for version {version} at {rst_path}"
+            )
 
 
 def main() -> None:
