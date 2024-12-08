@@ -103,7 +103,7 @@ class HTTPClient:
     @log_exec
     async def fetch_global_model(self) -> tuple[dict[str, torch.Tensor], int]:
         """Fetch current global model from server."""
-        with self._logger.context("client.http", self._client_id):
+        with self._logger.context("client.http"):
             if self._session is None:
                 raise NanoFedError("Client session not initialized")
 
@@ -160,7 +160,7 @@ class HTTPClient:
         self, model: ModelProtocol, metrics: dict[str, float]
     ) -> bool:
         """Submit model udpate to server."""
-        with self._logger.context("client.http", self._client_id):
+        with self._logger.context("client.http"):
             if self._session is None:
                 raise NanoFedError("Client session not initialized")
 

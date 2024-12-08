@@ -32,14 +32,6 @@ class BaseAggregator(ABC, Generic[T]):
     def current_round(self) -> int:
         return self._current_round
 
-    def _compute_weights(self, num_clients: int) -> list[float]:
-        """Compute aggregation weights for clients."""
-        if num_clients not in self._weights_cache:
-            self._weights_cache[num_clients] = [
-                1.0 / num_clients
-            ] * num_clients
-        return self._weights_cache[num_clients]
-
     def _validate_updates(self, updates: Sequence[ModelUpdate]) -> None:
         """Validate model updates before aggregation."""
         if not updates:
@@ -63,4 +55,22 @@ class BaseAggregator(ABC, Generic[T]):
         self, model: T, updates: Sequence[ModelUpdate]
     ) -> AggregationResult[T]:
         """Aggregate model updates."""
+        pass
+
+    @abstractmethod
+    def _compute_weights(self, updates: Sequence[ModelUpdate]) -> list[float]:
+        """Compute aggregation weights for clients.
+
+        Each aggregation strategy should implement its own weighting scheme.
+
+        Parameters
+        ----------
+        updates : Sequence[ModelUpdate]
+            Sequence of model updates from clients.
+
+        Returns
+        -------
+        list[float]
+            List of weights, one per client update.
+        """
         pass

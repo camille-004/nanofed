@@ -50,7 +50,7 @@ class FedAvgAggregator(BaseAggregator[ModelProtocol]):
         """Aggregate updates using FedAvg algorithm."""
         self._validate_updates(updates)
 
-        weights = self._compute_weights(len(updates))
+        weights = self._compute_weights(updates)
         state_agg: dict[str, torch.Tensor] = {}
 
         for key, value in updates[0]["model_state"].items():
@@ -65,7 +65,7 @@ class FedAvgAggregator(BaseAggregator[ModelProtocol]):
         # Update global model
         model.load_state_dict(state_agg)
 
-        avg_metrics = self._aggregate_metrics(updates)
+        avg_metrics = self._aggregate_metrics(updates, weights)
 
         self._current_round += 1
 
@@ -78,18 +78,48 @@ class FedAvgAggregator(BaseAggregator[ModelProtocol]):
         )
 
     def _aggregate_metrics(
-        self, updates: Sequence[ModelUpdate]
+        self, updates: Sequence[ModelUpdate], weights: list[float]
     ) -> dict[str, float]:
         """Aggregate metrics from all updates."""
-        all_metrics: dict[str, list[float]] = {}
+        # (value, weight) pairs
+        all_metrics: dict[str, list[tuple[float, float]]] = {}
 
-        for update in updates:
+        for update, weight in zip(updates, weights):
             for key, value in update["metrics"].items():
                 if isinstance(value, (int, float)):
-                    all_metrics.setdefault(key, []).append(value)
+                    if key not in all_metrics:
+                        all_metrics[key] = []
+                    all_metrics[key].append((float(value), weight))
 
         return {
-            key: sum(values) / len(values)
-            for key, values in all_metrics.items()
-            if values
+            key: sum(val * w for val, w in value_pairs)
+            / sum(w for _, w in value_pairs)
+            for key, value_pairs in all_metrics.items()
+            if value_pairs
         }
+
+    def _compute_weights(self, updates: Sequence[ModelUpdate]) -> list[float]:
+        # In FedAvg, each client's weight is proportional to its local dataset
+        # size:
+        # w_k = n_k / n where n_k is client k's dataset size and n is total
+        # samples.
+        sample_counts = []
+        for update in updates:
+            num_samples = update["metrics"].get("num_samples") or update[
+                "metrics"
+            ].get("samples_processed")
+            if num_samples is None:
+                self._logger.warning(
+                    f"Client {update['client_id']} did not report sample "
+                    f"count. Using 1.0"
+                )
+                num_samples = 1.0
+            sample_counts.append(num_samples)
+
+        total_samples = sum(sample_counts)
+        weights = [count / total_samples for count in sample_counts]
+
+        self._logger.debug(f"Client sample counts: {sample_counts}")
+        self._logger.debug(f"Computed weights: {weights}")
+
+        return weights

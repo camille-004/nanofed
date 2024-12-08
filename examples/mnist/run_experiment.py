@@ -17,11 +17,27 @@ from nanofed.models import MNISTModel
 from nanofed.trainer import TorchTrainer, TrainingConfig
 
 
-async def run_client(client_id: str, server_url: str, data_dir: Path):
-    """Run a federated client."""
+async def run_client(client_id: str, server_url: str, data_dir: Path, num_samples: int):
+    """Run a federated client.
+
+    Parameters
+    ----------
+    client_id : str
+        Unique identifier for this client
+    server_url : str
+        URL of the FL server
+    data_dir : Path
+        Directory containing the dataset
+    num_samples : int
+        Number of samples for this client's dataset
+    """
+    # Calculate subset fraction based on desired number of samples
+    # MNIST train set has 60000 samples
+    subset_fraction = num_samples / 60000
+
     # Prepare the client's local dataset
     train_loader = load_mnist_data(
-        data_dir=data_dir, batch_size=64, train=True
+        data_dir=data_dir, batch_size=64, train=True, subset_fraction=subset_fraction
     )
 
     # Client training configuration
@@ -112,9 +128,9 @@ async def main():
     # Run the coordinator and clients concurrently
     await asyncio.gather(
         coordinate(coordinator),
-        run_client("client_1", "http://0.0.0.0:8080", data_dir),
-        run_client("client_2", "http://0.0.0.0:8080", data_dir),
-        run_client("client_3", "http://0.0.0.0:8080", data_dir),
+        run_client("client_1", "http://0.0.0.0:8080", data_dir, num_samples=12000),
+        run_client("client_2", "http://0.0.0.0:8080", data_dir, num_samples=8000),
+        run_client("client_3", "http://0.0.0.0:8080", data_dir, num_samples=4000),
     )
 
 
