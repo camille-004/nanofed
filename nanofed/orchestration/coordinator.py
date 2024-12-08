@@ -236,10 +236,20 @@ class Coordinator:
                         for update in self._server._updates.values()
                     ]
 
+                    weights = self._aggregator._compute_weights(client_updates)
+
+                    client_weights = {
+                        update["client_id"]: weight
+                        for update, weight in zip(client_updates, weights)
+                    }
+
                     client_metrics = [
                         {
                             "client_id": update.get("client_id"),
                             "metrics": update.get("metrics", {}),
+                            "weight": client_weights[
+                                str(update.get("client_id", ""))
+                            ],
                         }
                         for update in client_updates
                     ]
@@ -253,6 +263,7 @@ class Coordinator:
                             "round": self._current_round,
                             "num_clients": len(client_updates),
                             "client_metrics": client_metrics,
+                            "client_weights": client_weights,
                         },
                         metrics=aggregation_result.metrics,
                     )
