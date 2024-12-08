@@ -27,7 +27,6 @@ class CoordinatorConfig:
     min_clients: int
     min_completion_rate: float
     round_timeout: int
-    checkpoint_dir: Path
     metrics_dir: Path
 
 
@@ -92,7 +91,6 @@ class Coordinator:
         self._round_lock = asyncio.Lock()
 
         # Create directories
-        self._config.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self._config.metrics_dir.mkdir(parents=True, exist_ok=True)
 
     @property
@@ -241,13 +239,7 @@ class Coordinator:
                     client_metrics = [
                         {
                             "client_id": update.get("client_id"),
-                            "loss": update.get("metrics", {}).get("loss"),
-                            "accuracy": update.get("metrics", {}).get(
-                                "accuracy"
-                            ),
-                            "samples_processed": update.get("metrics", {}).get(
-                                "samples_processed"
-                            ),
+                            "metrics": update.get("metrics", {}),
                         }
                         for update in client_updates
                     ]
@@ -256,17 +248,13 @@ class Coordinator:
                         self._model, client_updates
                     )
 
-                    checkpoint_path = (
-                        self._config.checkpoint_dir
-                        / f"round_{self._current_round}.pt"
-                    )
-                    torch.save(
-                        {
-                            "model_state": self._model.state_dict(),
+                    self._server._model_manager.save_model(
+                        config={
                             "round": self._current_round,
-                            "metrics": aggregation_result.metrics,
+                            "num_clients": len(client_updates),
+                            "client_metrics": client_metrics,
                         },
-                        checkpoint_path,
+                        metrics=aggregation_result.metrics,
                     )
 
                     self._current_round += 1
@@ -280,9 +268,9 @@ class Coordinator:
                         agg_metrics=aggregation_result.metrics,
                         status=self._status,
                     )
+
                     self._round_metrics.append(metrics)
                     self._save_metrics(metrics, client_metrics)
-
                     self._server._updates.clear()
 
                     return metrics
