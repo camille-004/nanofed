@@ -55,3 +55,6 @@ release-prepare:
 		exit 1; \
 	fi
 	poetry run python scripts/prepare_release.py $(version)
+
+release:
+	./scripts/release.sh

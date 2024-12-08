@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import NDArray
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
@@ -28,9 +29,10 @@ def load_mnist_data(
 
     if subset_fraction < 1.0:
         num_samples = int(len(dataset) * subset_fraction)
-        subset_indices: list[int] = np.random.choice(
+        indices: NDArray[np.int64] = np.random.choice(
             len(dataset), num_samples, replace=False
-        ).tolist()
+        )
+        subset_indices: list[int] = indices.tolist()
         dataset = Subset(dataset, subset_indices)
 
     return DataLoader(
