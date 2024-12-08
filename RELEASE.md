@@ -16,7 +16,7 @@ This document describes the steps to create a new release of NanoFed.
     make release-prepare version=<new-version>  # e.g., make release-prepare version=0.1.3
     ```
     This script will:
-    - Validate the version format
+    - Update the library version in `pyproject.toml`
     - Run all tests
     - Check types
     - Run linting
@@ -25,43 +25,31 @@ This document describes the steps to create a new release of NanoFed.
 
 ## Release Steps
 
-1. **Generate Changelog and Release Notes**
-
-    ```bash
-    python scripts/changelog.py v<new-version>  # e.g., python scripts/changelog.py v0.1.3
-    ```
-
-2. **Review and Edit Release Notes**
-    - Edit `docs/source/release_notes/v<new-version>.rst`
-    - Review/edit the generated `CHANGELOG.md`
-    - Add any additional notes, breaking changes, or important updates
-
-3. **Commit Changes**
-
-    ```bash
-    git add pyproject.toml CHANGELOG.md docs/source/release_notes
-    git commit -m "chore: prepare release v<new-version>"
-    ```
-
-4. **Create and Push Tag**
-
-    ```bash
-    git tag -a v<new-version> -m "Release v<new-version>"
-    git push origin main
-    git push origin v<new-version>
-    ```
-
-## Troubleshooting
-
-### Version Mismatch
-
-If you get a version mismatch error in GitHub Actions:
+The release process is automated via a single command after the pre-release checks:
 
 ```bash
-git push origin --delete v<version>  # Delete remote tag
-git tag -d <version>  # Delete local tag
-# Then repeats 3-4 from Release Steps
+make release
 ```
+
+This command will:
+
+1. Validate that you're on the main branch with a clean working directory
+2. Generate the changelog automatically
+3. Pause for you to review and edit the release notes:
+    - Edit `docs/source/release_notes/v<new-version>.rst`
+    - Add any additional notes, breaking changes, or important updates
+4. Commit all changes
+6. Create and push the version tag
+
+### Next Steps
+
+After running `make release`, you should:
+
+1. Wait for CI to compelte
+2. Monitor PyPI release
+3. Verify documentation update
+
+## Troubleshooting
 
 ### PyPi Upload Issues
 
