@@ -62,6 +62,7 @@ Improved FedAvg implementation to properly weight client contributions based on 
 * update model management concept `35378d6 <https://github.com/camille-004/nanofed/commit/35378d6>`_
 * add automated release back into changelog and prepare_relase `f46fd19 <https://github.com/camille-004/nanofed/commit/f46fd19>`_
 * add automated release `f707247 <https://github.com/camille-004/nanofed/commit/f707247>`_
+* prepare release v0.1.4 `90a2f9d <https://github.com/camille-004/nanofed/commit/90a2f9d>`_
 * Merge pull request #5 from camille-004/cd/fedavg-weights (6533fd1) ()
 * Merge pull request #4 from camille-004/model-management (a30e8e3) ()
 * Merge pull request #3 from camille-004/automate-release (1331db9) ()

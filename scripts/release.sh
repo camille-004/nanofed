@@ -81,6 +81,7 @@ main() {
     step "Creating and pushing tag..."
     git tag -a "v${VERSION}" -m "Release v${VERSION}"
     git push origin main
+    git push origin "v${VERSION}"
 
     echo -e "\n${GREEN}Release v${VERSION} has been prepared and pushed!${NC}"
     echo -e "\nNext steps:"
