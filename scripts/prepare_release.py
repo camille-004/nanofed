@@ -38,7 +38,7 @@ def create_release_notes(version: str) -> None:
     # Read and update template content
     template_content = template_path.read_text()
     release_content = template_content.replace("{version}", version).replace(
-        "{release_date}", today
+        "{date}", today
     )
 
     # Write the new release notes file
