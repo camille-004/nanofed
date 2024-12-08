@@ -28,10 +28,10 @@ def load_mnist_data(
 
     if subset_fraction < 1.0:
         num_samples = int(len(dataset) * subset_fraction)
-        subset_indices = np.random.choice(
+        subset_indices: list[int] = np.random.choice(
             len(dataset), num_samples, replace=False
-        )
-        dataset = Subset(dataset, subset_indices.tolist())
+        ).tolist()
+        dataset = Subset(dataset, subset_indices)
 
     return DataLoader(
         dataset, batch_size=batch_size, shuffle=train, num_workers=2
