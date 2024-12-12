@@ -1,8 +1,11 @@
-from typing import Iterator, Protocol, TypeVar
+from pathlib import Path
+from typing import Any, Iterator, Protocol, TypeVar
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+
+from .types import ModelVersion
 
 T = TypeVar("T", bound=nn.Module)
 
@@ -28,3 +31,37 @@ class TrainerProtocol(Protocol[T]):
 
     def train(self, model: T, data: DataLoader) -> T: ...
     def validate(self, model: T, data: DataLoader) -> dict[str, float]: ...
+
+
+class ModelManagerProtocol(Protocol):
+    """Protocol defining required model manager interface."""
+
+    def set_dirs(self, models_dir: Path, configs_dir: Path) -> None: ...
+    @property
+    def current_version(self) -> Any: ...
+    def load_model(self) -> Any: ...
+    def save_model(
+        self, config: dict[str, Any], metrics: dict[str, float] | None
+    ) -> Any: ...
+    @property
+    def list_versions(self) -> list[ModelVersion]: ...
+    @property
+    def model(self) -> ModelProtocol: ...
+
+
+class CoordinatorProtocol(Protocol):
+    """Protocol defining required coordinator interface."""
+
+    @property
+    def model_manager(self) -> ModelManagerProtocol: ...
+
+
+class ServerProtocol(Protocol):
+    """Protocol defining required server interface."""
+
+    @property
+    def host(self) -> str: ...
+    @property
+    def port(self) -> int: ...
+    @property
+    def url(self) -> str: ...

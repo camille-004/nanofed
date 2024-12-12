@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from datetime import datetime
-from typing import TypedDict
+from pathlib import Path
+from typing import Any, TypedDict
 
 import torch
 
@@ -12,3 +14,13 @@ class ModelUpdate(TypedDict):
     round_number: int
     metrics: dict[str, float]
     timestamp: datetime
+
+
+@dataclass(slots=True, frozen=True)
+class ModelVersion:
+    """Model version information."""
+
+    version_id: str
+    timestamp: datetime
+    config: dict[str, Any]
+    path: Path

@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Any, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, cast
 
 import numpy as np
 import torch
@@ -11,13 +11,19 @@ from nanofed.communication.http.types import (
     ModelUpdateResponse,
     ServerModelUpdateRequest,
 )
-from nanofed.server import ModelManager
+from nanofed.core import ServerProtocol
 from nanofed.utils import Logger, get_current_time
 
 TensorLike: TypeAlias = (
     torch.Tensor | list[float] | list[list[float]] | float | int
 )
 ModelState: TypeAlias = dict[str, list[float] | list[list[float]]]
+
+
+if TYPE_CHECKING:
+    from nanofed.orchestration import Coordinator
+else:
+    Coordinator = "Coordinator"
 
 
 @dataclass(slots=True, frozen=True)
@@ -29,7 +35,7 @@ class ServerEndpoints:
     get_status: str = "/status"
 
 
-class HTTPServer:
+class HTTPServer(ServerProtocol):
     """HTTP server for FL coordination.
 
     Manages client connections, model distribution, and update collection using
@@ -41,8 +47,6 @@ class HTTPServer:
         Server host address.
     port : int
         Server port number.
-    model_manager : ModelManager
-        Manager for global model versions.
     endpoints : ServerEndpoints, optional
         Custom endpoint configuration.
     max_request_size : int, default=104857600
@@ -56,31 +60,69 @@ class HTTPServer:
         Dictionary of received client updates.
     _is_training_done : bool
         Flag indicating training completion.
+    _coordinator : Coordinator | None
+        Reference to coordinator managing this server.
     """
 
     def __init__(
         self,
         host: str,
         port: int,
-        model_manager: ModelManager,
         endpoints: ServerEndpoints | None = None,
         max_request_size: int = 100 * 1024 * 1024,  # 100MB default
     ) -> None:
         self._host = host
         self._port = port
-        self._model_manager = model_manager
         self._endpoints = endpoints or ServerEndpoints()
         self._logger = Logger()
         self._app = web.Application(client_max_size=max_request_size)
         self._setup_routes()
         self._runner: web.AppRunner | None = None
         self._site: web.TCPSite | None = None
+        self._coordinator: Coordinator | None = None
 
         # State tracking
         self._current_round: int = 0
         self._updates: dict[str, ServerModelUpdateRequest] = {}
         self._lock = asyncio.Lock()
         self._is_training_done = False
+
+    @property
+    def host(self) -> str:
+        """Get the server host address.
+
+        Returns
+        -------
+        str
+            The server host address.
+        """
+        return self._host
+
+    @property
+    def port(self) -> int:
+        """Get the server port number.
+
+        Returns
+        -------
+        int
+            The server port number.
+        """
+        return self._port
+
+    @property
+    def url(self) -> str:
+        """Get the full serevr URL.
+
+        Returns
+        -------
+        str
+            The full server url.
+        """
+        return f"http://{self._host}:{self._port}"
+
+    def set_coordinator(self, coordinator: Coordinator) -> None:
+        """Set the coordinator managing this server."""
+        self._coordinator = coordinator
 
     def _setup_routes(self) -> None:
         self._logger.debug("Setting up routes for HTTP server.")
@@ -111,6 +153,15 @@ class HTTPServer:
 
     async def _handle_get_model(self, request: web.Request) -> web.Response:
         """Handle request for global model."""
+        if not self._coordinator:
+            return web.json_response(
+                {
+                    "status": "error",
+                    "message": "Server not initialized with coordinator",
+                    "timestamp": get_current_time().isoformat(),
+                },
+                status=500,
+            )
         with self._logger.context("server.http", "get_model"):
             self._logger.debug("Processing /model request.")
             try:
@@ -128,15 +179,16 @@ class HTTPServer:
                         }
                     )
 
-                version = self._model_manager.current_version
+                model_manager = self._coordinator.model_manager
+                version = model_manager.current_version
                 if version is None:
-                    version = self._model_manager.load_model()
+                    version = model_manager.load_model()
 
                 self._logger.debug(
                     f"Serving model version {version.version_id}"
                 )
 
-                state_dict = self._model_manager._model.state_dict()
+                state_dict = model_manager.model.state_dict()
                 model_state = {
                     key: self._convert_tensor(value)
                     for key, value in state_dict.items()

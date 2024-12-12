@@ -17,17 +17,15 @@ from nanofed.models import MNISTModel
 from nanofed.trainer import TorchTrainer, TrainingConfig
 
 
-async def run_client(client_id: str, server_url: str, data_dir: Path, num_samples: int):
+async def run_client(client_id: str, coordinator: Coordinator, num_samples: int):
     """Run a federated client.
 
     Parameters
     ----------
     client_id : str
         Unique identifier for this client
-    server_url : str
-        URL of the FL server
-    data_dir : Path
-        Directory containing the dataset
+    coordinator : Coordinator
+        Federated learning coordinator managing the training.
     num_samples : int
         Number of samples for this client's dataset
     """
@@ -37,7 +35,7 @@ async def run_client(client_id: str, server_url: str, data_dir: Path, num_sample
 
     # Prepare the client's local dataset
     train_loader = load_mnist_data(
-        data_dir=data_dir, batch_size=64, train=True, subset_fraction=subset_fraction
+        data_dir=coordinator.data_dir, batch_size=64, train=True, subset_fraction=subset_fraction
     )
 
     # Client training configuration
@@ -49,6 +47,8 @@ async def run_client(client_id: str, server_url: str, data_dir: Path, num_sample
         log_interval=10,  # Logging interval during training
     )
     trainer = TorchTrainer(training_config)
+
+    server_url = coordinator.server.url
 
     # Use an HTTP client to communicate with the federated server
     async with HTTPClient(
@@ -87,19 +87,15 @@ async def run_client(client_id: str, server_url: str, data_dir: Path, num_sample
 
 async def main():
     base_dir = Path("runs/")  # Base directory for outputs and checkpoints
-    model_dir = base_dir / "models"  # Directory to store model versions
-    metrics_dir = base_dir / "metrics"  # Directory for metrics
-    data_dir = base_dir / "data"  # Directory containing the dataset
 
     # Prepare the global model
     model = MNISTModel()
-    model_manager = ModelManager(model_dir, model)
+    model_manager = ModelManager(model=model)
 
     # Set up server to handle communication with clients
     server = HTTPServer(
         host="0.0.0.0",  # Server address
         port=8080,  # Server port
-        model_manager=model_manager,  # Model manager for global model
         max_request_size=100 * 1024 * 1024,  # 100MB maximum request size
     )
     await server.start()
@@ -114,12 +110,12 @@ async def main():
         # 80% of clients required to complete per round:
         min_completion_rate=0.8,
         round_timeout=300,  # 5-minute timeout per round,
-        metrics_dir=metrics_dir,  # Directory for round metrics
+        base_dir=base_dir,  # Base directory for all data
     )
 
     # Initialize coordinator
     coordinator = Coordinator(
-        model=model,
+        model_manager=model_manager,
         aggregator=aggregator,
         server=server,
         config=coordinator_config,
@@ -128,9 +124,9 @@ async def main():
     # Run the coordinator and clients concurrently
     await asyncio.gather(
         coordinate(coordinator),
-        run_client("client_1", "http://0.0.0.0:8080", data_dir, num_samples=12000),
-        run_client("client_2", "http://0.0.0.0:8080", data_dir, num_samples=8000),
-        run_client("client_3", "http://0.0.0.0:8080", data_dir, num_samples=4000),
+        run_client("client_1", coordinator, num_samples=12000),
+        run_client("client_2", coordinator, num_samples=8000),
+        run_client("client_3", coordinator, num_samples=4000),
     )
 
 
