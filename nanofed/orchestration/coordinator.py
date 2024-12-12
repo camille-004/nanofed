@@ -3,12 +3,11 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncGenerator, Callable, Sequence
+from typing import TYPE_CHECKING, AsyncGenerator, Callable, Sequence
 
 import torch
 
-from nanofed.communication import HTTPServer
-from nanofed.core import ModelProtocol, ModelUpdate
+from nanofed.core import ModelManagerProtocol, ModelUpdate
 from nanofed.orchestration.types import (
     ClientInfo,
     RoundMetrics,
@@ -18,16 +17,36 @@ from nanofed.orchestration.types import (
 from nanofed.server import BaseAggregator
 from nanofed.utils import Logger, get_current_time, log_exec
 
+if TYPE_CHECKING:
+    from nanofed.communication import HTTPServer
+else:
+    HTTPServer = "HTTPServer"
+
 
 @dataclass(slots=True, frozen=True)
 class CoordinatorConfig:
-    """Coordinator configuration."""
+    """Coordinator configuration.
+
+    Parameters
+    ----------
+    num_rounds : int
+        Number of federated training rounds to execute.
+    min_clients : int
+        Minimum number of clients required for training.
+    min_completion_rate : float
+        Minimum fraction of clients that must complete each round
+    round_timeout : int
+        Maximum time in seconds to wait for client updates per round.
+    base_dir : Path
+        Base directory for all federation data, including models, metrics,
+        and data.
+    """
 
     num_rounds: int
     min_clients: int
     min_completion_rate: float
     round_timeout: int
-    metrics_dir: Path
+    base_dir: Path
 
 
 class Coordinator:
@@ -38,8 +57,8 @@ class Coordinator:
 
     Parameters
     ----------
-    model : ModelProtocol
-        Global model instance.
+    model_manager : ModelManagerProtocol
+        Manager for model versioning and storag.
     aggregator : BaseAggregator
         Strategy for aggregating client updates.
     server : HTTPServer
@@ -65,19 +84,21 @@ class Coordinator:
 
     Examples
     --------
-    >>> coordinator = Coordinator(model, aggregator, server, config)
+    >>> model = PyTorchModule()
+    >>> model_manager = ModelManager(model)
+    >>> coordinator = Coordinator(model_manager, aggregator, server, config)
     >>> async for metrics in coordinator.start_training():
     ...     print(f"Round {metrics.round_id} completed")
     """
 
     def __init__(
         self,
-        model: ModelProtocol,
+        model_manager: ModelManagerProtocol,
         aggregator: BaseAggregator,
         server: HTTPServer,
         config: CoordinatorConfig,
     ) -> None:
-        self._model = model
+        self._model_manager = model_manager
         self._aggregator = aggregator
         self._server = server
         self._config = config
@@ -91,7 +112,71 @@ class Coordinator:
         self._round_lock = asyncio.Lock()
 
         # Create directories
-        self._config.metrics_dir.mkdir(parents=True, exist_ok=True)
+        self._metrics_dir = self._config.base_dir / "metrics"
+        self._data_dir = self._config.base_dir / "data"
+        self._models_dir = self._config.base_dir / "models"
+        self._model_configs_dir = self._models_dir / "configs"
+        self._model_weights_dir = self._models_dir / "models"
+
+        self._setup_directories()
+
+        self._model_manager.set_dirs(
+            self._model_weights_dir, self._model_configs_dir
+        )
+        self._server.set_coordinator(self)
+
+    @property
+    def server(self) -> HTTPServer:
+        """Get the HTTP server instance.
+
+        Returns
+        -------
+        HTTPServer
+            The HTTP server instance.
+        """
+        return self._server
+
+    @property
+    def data_dir(self) -> Path:
+        """Get the data directory path.
+
+        Returns
+        -------
+        Path
+            The data directory path.
+        """
+        return self._data_dir
+
+    @property
+    def model_manager(self) -> ModelManagerProtocol:
+        """Get the model manager instance.
+
+        Returns
+        -------
+        ModelManager
+            The model manager instance.
+        """
+        return self._model_manager
+
+    def _setup_directories(self) -> None:
+        """Create all required directories under the base directory."""
+        with self._logger.context("coordinator.setup"):
+            dirs = [
+                self._metrics_dir,
+                self._data_dir,
+                self._model_configs_dir,
+                self._model_weights_dir,
+            ]
+
+            for directory in dirs:
+                try:
+                    directory.mkdir(parents=True, exist_ok=True)
+                    self._logger.info(f"Created directory: {directory}")
+                except Exception as e:
+                    self._logger.error(
+                        f"Failed to create directory {directory}: {str(e)}"
+                    )
+                    raise
 
     @property
     def training_progress(self) -> TrainingProgress:
@@ -165,9 +250,8 @@ class Coordinator:
         with self._logger.context(
             "coordinator.metrics", f"round_{metrics.round_id}"
         ):
-            metrics_dir = self._config.metrics_dir
             metrics_file = (
-                metrics_dir / f"metrics_round_{metrics.round_id}.json"
+                self._metrics_dir / f"metrics_round_{metrics.round_id}.json"
             )
 
             metrics_data = {
@@ -255,17 +339,20 @@ class Coordinator:
                     ]
 
                     aggregation_result = self._aggregator.aggregate(
-                        self._model, client_updates
+                        self._model_manager.model, client_updates
                     )
 
-                    self._server._model_manager.save_model(
-                        config={
-                            "round": self._current_round,
-                            "num_clients": len(client_updates),
-                            "client_metrics": client_metrics,
-                            "client_weights": client_weights,
-                        },
-                        metrics=aggregation_result.metrics,
+                    config = {
+                        "round_id": self._current_round,
+                        "client_metrics": client_metrics,
+                        "client_weights": client_weights,
+                        "start_time": start_time.isoformat(),
+                        "status": self._status.name,
+                        "num_clients": len(client_updates),
+                    }
+
+                    self._model_manager.save_model(
+                        config=config, metrics=aggregation_result.metrics
                     )
 
                     self._current_round += 1

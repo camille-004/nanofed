@@ -1,12 +1,12 @@
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import torch
 
-from nanofed.core import ModelManagerError, ModelProtocol
+from nanofed.core import ModelManagerError, ModelProtocol, ModelVersion
 from nanofed.utils import Logger, get_current_time, log_exec
 
 
@@ -28,16 +28,6 @@ def make_json_serializable(
         return str(data)
 
 
-@dataclass(slots=True, frozen=True)
-class ModelVersion:
-    """Model version information."""
-
-    version_id: str
-    timestamp: datetime
-    config: dict[str, Any]
-    path: Path
-
-
 class ModelManager:
     """Manages versioning and storage of FL models.
 
@@ -46,8 +36,6 @@ class ModelManager:
 
     Parameters
     ----------
-    base_dir : Path
-        Base directory for model storage.
     model : ModelProtocol
         Initial model instance.
 
@@ -69,23 +57,24 @@ class ModelManager:
 
     Examples
     --------
-    >>> manager = ModelManager(Path("./models"), model)
+    >>> model = PyTorchModule()
+    >>> manager = ModelManager(model)
     >>> version = manager.save_model(config)
     >>> manager.load_model(version.version_id)
     """
 
-    def __init__(self, base_dir: Path, model: ModelProtocol) -> None:
-        self._base_dir = base_dir
+    def __init__(self, model: ModelProtocol) -> None:
         self._model = model
         self._logger = Logger()
         self._current_version: ModelVersion | None = None
         self._version_counter: int = 0
+        self._models_dir: Path | None = None
+        self._configs_dir: Path | None = None
 
-        # Create directories
-        self._models_dir = base_dir / "models"
-        self._configs_dir = base_dir / "configs"
-        self._models_dir.mkdir(parents=True, exist_ok=True)
-        self._configs_dir.mkdir(parents=True, exist_ok=True)
+    def set_dirs(self, models_dir: Path, configs_dir: Path) -> None:
+        """Set the directories for model storage after initialization"""
+        self._models_dir = models_dir
+        self._configs_dir = configs_dir
 
         # Make sure an initial model exists if no versions are present
         if not self.list_versions():
@@ -96,6 +85,10 @@ class ModelManager:
     @property
     def current_version(self) -> ModelVersion | None:
         return self._current_version
+
+    @property
+    def model(self) -> ModelProtocol:
+        return self._model
 
     def _generate_version_id(self) -> str:
         """Generate a unique version ID."""
@@ -108,6 +101,11 @@ class ModelManager:
         self, config: dict[str, Any], metrics: dict[str, float] | None = None
     ) -> ModelVersion:
         """Save current model state with configuration."""
+        if not self._models_dir or not self._configs_dir:
+            raise ModelManagerError(
+                "Directories not set. Call set_dirs first."
+            )
+
         with self._logger.context("model_manager", "save"):
             version_id = self._generate_version_id()
 
@@ -120,7 +118,6 @@ class ModelManager:
                 "version_id": version_id,
                 "timestamp": get_current_time().isoformat(),
                 "config": config_dict,
-                "metrics": metrics or {},
             }
 
             config_path = self._configs_dir / f"{version_id}.json"
@@ -147,6 +144,11 @@ class ModelManager:
     @log_exec
     def load_model(self, version_id: str | None = None) -> ModelVersion:
         """Load a specific model version or latest."""
+        if not self._configs_dir or not self._models_dir:
+            raise ModelManagerError(
+                "Directories not set. Call set_dirs first."
+            )
+
         with self._logger.context("model_manager", "load"):
             if version_id is None:
                 config_files = sorted(self._configs_dir.glob("*.json"))
@@ -187,6 +189,11 @@ class ModelManager:
 
     def list_versions(self) -> list[ModelVersion]:
         """List all available model versions."""
+        if not self._configs_dir or not self._models_dir:
+            raise ModelManagerError(
+                "Directories not set. Call set_dirs first."
+            )
+
         versions = []
         for config_path in sorted(self._configs_dir.glob("*.json")):
             with open(config_path) as f:

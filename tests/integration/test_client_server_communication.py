@@ -2,41 +2,58 @@ from pathlib import Path
 
 import pytest
 
-from nanofed import HTTPClient, HTTPServer, ModelManager
+from nanofed import (
+    Coordinator,
+    CoordinatorConfig,
+    HTTPClient,
+    HTTPServer,
+    ModelManager,
+)
 from nanofed.core import NanoFedError
 from nanofed.models import MNISTModel
+from nanofed.server import BaseAggregator
+
+
+class MockAggregator(BaseAggregator):
+    def aggregate(self, updates):
+        return updates[0]
+
+    def _compute_weights(self, updates):
+        return [1.0] * len(updates)
 
 
 @pytest.fixture
 def test_config(tmp_path: Path):
     """Create test configuration."""
-    config = {
-        "name": "test_model",
-        "version": "1.0",
-        "architecture": {"type": "cnn"},
-    }
-    return config
+    return CoordinatorConfig(
+        num_rounds=1,
+        min_clients=1,
+        min_completion_rate=1.0,
+        round_timeout=10,
+        base_dir=tmp_path,
+    )
 
 
 @pytest.mark.asyncio
 async def test_model_exchange(tmp_path: Path, test_config):
     """Test model exchange between client and server."""
-    # Create directories
-    model_dir = tmp_path / "models"
-    model_dir.mkdir()
-
     # Setup server
     model = MNISTModel()
-    model_manager = ModelManager(model_dir, model)
-    model_manager.save_model(test_config)
+    model_manager = ModelManager(model)
+    server = HTTPServer("localhost", 8080)
+    aggregator = MockAggregator()
 
-    server = HTTPServer("localhost", 8080, model_manager)
+    coordinator = Coordinator(  # noqa
+        model_manager=model_manager,
+        aggregator=aggregator,
+        server=server,
+        config=test_config,
+    )
+
     await server.start()
 
     try:
-        async with HTTPClient(
-            "http://localhost:8080", "test_client"
-        ) as client:
+        async with HTTPClient(server.url, "test_client") as client:
             model_state, round_num = await client.fetch_global_model()
             assert round_num == 0
             assert isinstance(model_state, dict)
@@ -47,13 +64,11 @@ async def test_model_exchange(tmp_path: Path, test_config):
 @pytest.mark.asyncio
 async def test_server_error_handling():
     """Test server error handling scenarios."""
-    server = HTTPServer("localhost", 8080, None)  # Invalid setup
+    server = HTTPServer("localhost", 8080)  # Server without coordinator
     await server.start()
 
     try:
-        async with HTTPClient(
-            "http://localhost:8080", "test_client"
-        ) as client:
+        async with HTTPClient(server.url, "test_client") as client:
             with pytest.raises(NanoFedError):
                 await client.fetch_global_model()
     finally:
