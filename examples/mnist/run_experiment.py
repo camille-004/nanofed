@@ -11,10 +11,11 @@ from nanofed import (
     HTTPServer,
     ModelManager,
     coordinate,
+    TorchTrainer,
+    TrainingConfig
 )
 from nanofed.data import load_mnist_data
 from nanofed.models import MNISTModel
-from nanofed.trainer import TorchTrainer, TrainingConfig
 
 
 async def run_client(client_id: str, coordinator: Coordinator, num_samples: int):
@@ -107,8 +108,8 @@ async def main():
     coordinator_config = CoordinatorConfig(
         num_rounds=2,  # Total number of training rounds
         min_clients=3,  # Minimum number of participating clients
-        # 80% of clients required to complete per round:
-        min_completion_rate=0.8,
+        # 100% of clients required to complete per round:
+        min_completion_rate=1.0,
         round_timeout=300,  # 5-minute timeout per round,
         base_dir=base_dir,  # Base directory for all data
     )

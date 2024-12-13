@@ -76,21 +76,7 @@ make install
 
 ## 🔧 Quick Start
 
-Train a model using federated learning in just a few lines of code:
-
-```python
-import asyncio
-from nanofed import HTTPClient, TorchTrainer, TrainingConfig
-
-async def run_client(client_id: str, server_url: str):
-    training_config = TrainingConfig(epochs=1, batch_size=256, learning_rate=0.1)
-    async with HTTPClient(server_url, client_id) as client:
-        model_state, _ = await client.fetch_global_model()
-        await client.submit_update(model_state)
-
-if __name__ == "__main__":
-    asyncio.run(run_client("client1", "http://localhost:8080"))
-```
+Train a model using federated learning in just a few lines of code. Follow the tutorial notebook [here](examples/mnist/tutorial.ipynb).
 
 ---
 

@@ -55,6 +55,7 @@ sphinx-tabs = "^3.4.7"
 sphinx-togglebutton = "^0.3.2"
 sphinx-immaterial = "^0.12.4"
 tomlkit = "^0.13.2"
+ipykernel = "^6.29.5"
 
 [tool.poetry.extras]
 ml = ["torch", "torchvision"]
