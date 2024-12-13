@@ -214,4 +214,5 @@ NanoFed is available under the GPL-3.0 License.
    :caption: Documentation
 
    getting_started/concepts
+   getting_started/tutorial
    release_notes/index
