@@ -40,7 +40,7 @@ class PrivateTrainer(TorchTrainer):
         privacy_config : PrivacyConfig
             Privacy configuration
         accountant : GaussianAccountant | None, optional
-            Privacy accountaing for tracking privacy budget, by default None
+            Privacy accounting for tracking privacy budget, by default None
         noise_generator : GaussianNoiseGenerator | None, optional
             Noise generator for gradient perturbation, by default None
         callbacks : list[Callback] | None, optional
