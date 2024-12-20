@@ -29,6 +29,8 @@ pydantic = "^2.9.2"
 aiohttp = "^3.10.10"
 click = "^8.1.7"
 rich = "^13.9.4"
+scipy = "^1.14.1"
+cryptography = "^44.0.0"
 
 [tool.poetry.group.ml]
 optional = true

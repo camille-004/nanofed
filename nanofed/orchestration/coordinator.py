@@ -316,6 +316,7 @@ class Coordinator:
                             timestamp=datetime.fromisoformat(
                                 update["timestamp"]
                             ),
+                            privacy_spent=update["privacy_spent"],
                         )
                         for update in self._server._updates.values()
                     ]

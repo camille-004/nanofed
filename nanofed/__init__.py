@@ -7,13 +7,14 @@ from nanofed.orchestration import (
     coordinate,
 )
 from nanofed.server import FedAvgAggregator, ModelManager
-from nanofed.trainer import TorchTrainer, TrainingConfig
+from nanofed.trainer import PrivateTrainer, TorchTrainer, TrainingConfig
 
 __all__ = [
     "HTTPClient",
     "HTTPServer",
     "TrainingConfig",
     "TorchTrainer",
+    "PrivateTrainer",
     "Coordinator",
     "CoordinatorConfig",
     "FedAvgAggregator",

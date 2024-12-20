@@ -6,7 +6,7 @@ from typing import Generic, Sequence, TypeVar
 from nanofed.core.exceptions import AggregationError
 from nanofed.core.interfaces import ModelProtocol
 from nanofed.core.types import ModelUpdate
-from nanofed.utils import Logger
+from nanofed.utils import Logger, get_current_time
 
 T = TypeVar("T", bound=ModelProtocol)
 
@@ -33,6 +33,10 @@ class BaseAggregator(ABC, Generic[T]):
     @property
     def current_round(self) -> int:
         return self._current_round
+
+    def _get_timestamp(self) -> datetime:
+        """Get current timestamp."""
+        return get_current_time()
 
     def _validate_updates(self, updates: Sequence[ModelUpdate]) -> None:
         """Validate model updates before aggregation."""

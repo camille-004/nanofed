@@ -1,5 +1,7 @@
 from typing import Literal, TypedDict
 
+from nanofed.privacy.accountant import PrivacySpent
+
 
 class BaseResponse(TypedDict):
     """Base response structure."""
@@ -30,6 +32,7 @@ class ServerModelUpdateRequest(TypedDict, total=False):
     status: Literal["success", "error"]
     message: str
     accepted: bool
+    privacy_spent: PrivacySpent
 
 
 class ModelUpdateResponse(BaseResponse):
